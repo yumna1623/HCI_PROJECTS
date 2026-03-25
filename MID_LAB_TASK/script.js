@@ -18,11 +18,17 @@ const MAX_POLYLINES = 200;
 
 // COLORS 1x16
 const colors = ["cyan","red","yellow","green","blue","magenta","orange","white","pink","lime","purple","teal","brown","gray","gold","silver"];
-colors.forEach(color=>{
+colors.forEach(color => {
   const btn = document.createElement("div");
   btn.className = "palette-button";
   btn.style.backgroundColor = color;
-  btn.onclick = () => { currentColor = color; updateSelection(); };
+  btn.onclick = () => {
+    currentColor = color;
+    updateSelection();
+
+    // Start a new polyline automatically on next click
+    currentPolyline = null;
+  };
   colorContainer.appendChild(btn);
 });
 function updateSelection(){
