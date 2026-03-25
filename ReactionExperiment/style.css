@@ -1,0 +1,78 @@
+/* Basic page styling */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #c3ecff, #d7b4ff);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  text-align: center;
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 20px;
+  color: #4b0082;
+}
+
+.stimulus {
+  font-size: 6rem;
+  margin: 40px 0;
+  color: #6a0dad;
+  transition: all 0.2s ease;
+}
+
+button {
+  font-size: 1rem;
+  padding: 10px 20px;
+  background: #6a0dad;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #4b0082;
+}
+
+.stats {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  gap: 15px;
+}
+
+.card {
+  background: rgba(255,255,255,0.3);
+  padding: 15px 20px;
+  border-radius: 15px;
+  min-width: 80px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.card p:first-child {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.card p:last-child {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.instructions {
+  margin-top: 25px;
+  font-weight: 500;
+  color: #333;
+}

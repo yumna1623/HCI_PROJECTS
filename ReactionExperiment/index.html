@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Letter vs Number Reaction Test</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>Letter vs Number Reaction Test</h1>
+
+    <h2 id="stimulus" class="stimulus">Press Start</h2>
+
+    <button id="startBtn">Start / Restart</button>
+
+    <div class="stats">
+      <div class="card">
+        <p>Trials</p>
+        <p id="trials">0 / 10</p>
+      </div>
+      <div class="card">
+        <p>Correct</p>
+        <p id="correct">0</p>
+      </div>
+      <div class="card">
+        <p>Avg RT</p>
+        <p id="avgRT">0 ms</p>
+      </div>
+    </div>
+
+    <p class="instructions">
+      Press <strong>A</strong> for Letter | Press <strong>L</strong> for Number
+    </p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
