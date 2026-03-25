@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+/* src/index.css */
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+  body { background: #050810; color: #c8d8f0; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #0b0f1e; }
+  ::-webkit-scrollbar-thumb { background: #263452; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #00f5ff; }
+}
+
+@layer utilities {
+  .glow-cyan   { box-shadow: 0 0 8px #00f5ff88, 0 0 20px #00f5ff44; }
+  .glow-purple { box-shadow: 0 0 8px #bf5fff88, 0 0 20px #bf5fff44; }
+  .glow-pink   { box-shadow: 0 0 8px #ff2d7888, 0 0 20px #ff2d7844; }
+  .glow-green  { box-shadow: 0 0 8px #00ff9d88, 0 0 20px #00ff9d44; }
+  .glow-cyan-strong  { box-shadow: 0 0 16px #00f5ffaa, 0 0 40px #00f5ff55; }
+  .text-gradient-cyber {
+    background: linear-gradient(135deg, #ffffff 0%, #00f5ff 50%, #bf5fff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .neon-top-line::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #00f5ff, #bf5fff, transparent);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .bg-radial-cyber {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,245,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(191,95,255,0.05) 0%, transparent 60%);
+  }
+}
+
+@layer components {
+  .neon-border-active-cyan   { border-color: #00f5ff; background: rgba(0,245,255,0.07); box-shadow: 0 0 8px #00f5ff88, 0 0 20px #00f5ff44; }
+  .neon-border-active-purple { border-color: #bf5fff; background: rgba(191,95,255,0.07); box-shadow: 0 0 8px #bf5fff88, 0 0 20px #bf5fff44; }
+  .neon-border-active-pink   { border-color: #ff2d78; background: rgba(255,45,120,0.07); box-shadow: 0 0 8px #ff2d7888, 0 0 20px #ff2d7844; }
+  .neon-border-active-green  { border-color: #00ff9d; background: rgba(0,255,157,0.07); box-shadow: 0 0 8px #00ff9d88, 0 0 20px #00ff9d44; }
+}

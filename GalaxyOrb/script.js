@@ -1,0 +1,412 @@
+// ═══════════════════════════════════════════════════════
+//  BACKGROUND: Deep Space Nebula on 2D canvas
+// ═══════════════════════════════════════════════════════
+const bgCanvas = document.getElementById('bg-canvas');
+const bgCtx    = bgCanvas.getContext('2d');
+let BW = bgCanvas.width  = window.innerWidth;
+let BH = bgCanvas.height = window.innerHeight;
+
+// ── Stars ──────────────────────────────────────────────
+const STAR_COUNT = 700;
+const stars = Array.from({length: STAR_COUNT}, () => ({
+  x: Math.random() * BW,
+  y: Math.random() * BH,
+  r: Math.random() * 1.4 + 0.2,
+  alpha: Math.random() * 0.7 + 0.3,
+  twinkleSpeed: Math.random() * 0.8 + 0.3,
+  twinkleOffset: Math.random() * Math.PI * 2,
+  // slow drift
+  vx: (Math.random() - 0.5) * 0.04,
+  vy: (Math.random() - 0.5) * 0.04,
+}));
+
+// ── Nebula clouds: each is a soft radial blob ──────────
+const NEBULAS = [
+  { x: 0.15, y: 0.25, rx: 0.38, ry: 0.28, r: 90,  g: 20,  b: 160, a: 0.13, speed: 0.00006 },
+  { x: 0.78, y: 0.65, rx: 0.42, ry: 0.32, r: 160, g: 10,  b: 100, a: 0.10, speed: 0.00008 },
+  { x: 0.50, y: 0.40, rx: 0.55, ry: 0.40, r: 20,  g: 40,  b: 180, a: 0.09, speed: 0.00005 },
+  { x: 0.85, y: 0.15, rx: 0.30, ry: 0.22, r: 100, g: 180, b: 255, a: 0.08, speed: 0.00009 },
+  { x: 0.20, y: 0.80, rx: 0.35, ry: 0.28, r: 180, g: 50,  b: 200, a: 0.09, speed: 0.00007 },
+  { x: 0.60, y: 0.20, rx: 0.28, ry: 0.20, r: 30,  g: 180, b: 160, a: 0.07, speed: 0.00010 },
+];
+// give each nebula a phase offset for drift
+NEBULAS.forEach((n, i) => { n.phase = i * 1.3; });
+
+function drawBackground(t) {
+  bgCtx.clearRect(0, 0, BW, BH);
+
+  // Deep space base
+  bgCtx.fillStyle = '#02010a';
+  bgCtx.fillRect(0, 0, BW, BH);
+
+  // Nebula blobs
+  for (const n of NEBULAS) {
+    const cx = (n.x + Math.sin(t * n.speed + n.phase) * 0.06) * BW;
+    const cy = (n.y + Math.cos(t * n.speed * 1.3 + n.phase) * 0.05) * BH;
+    const rx = n.rx * BW;
+    const ry = n.ry * BH;
+
+    // Draw as elliptical radial gradient
+    bgCtx.save();
+    bgCtx.translate(cx, cy);
+    bgCtx.scale(1, ry / rx);
+    const grad = bgCtx.createRadialGradient(0, 0, 0, 0, 0, rx);
+    grad.addColorStop(0,   `rgba(${n.r},${n.g},${n.b},${n.a})`);
+    grad.addColorStop(0.4, `rgba(${n.r},${n.g},${n.b},${n.a * 0.5})`);
+    grad.addColorStop(1,   `rgba(${n.r},${n.g},${n.b},0)`);
+    bgCtx.fillStyle = grad;
+    bgCtx.beginPath();
+    bgCtx.arc(0, 0, rx, 0, Math.PI * 2);
+    bgCtx.fill();
+    bgCtx.restore();
+  }
+
+  // Secondary smaller nebula wisps
+  for (let i = 0; i < 4; i++) {
+    const cx = (0.3 + i * 0.18 + Math.sin(t * 0.00004 + i) * 0.04) * BW;
+    const cy = (0.55 + Math.cos(t * 0.00003 + i * 0.9) * 0.12) * BH;
+    const grad = bgCtx.createRadialGradient(cx, cy, 0, cx, cy, BW * 0.12);
+    grad.addColorStop(0,   `rgba(80,20,120,0.07)`);
+    grad.addColorStop(1,   `rgba(80,20,120,0)`);
+    bgCtx.fillStyle = grad;
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, BW * 0.12, 0, Math.PI * 2);
+    bgCtx.fill();
+  }
+
+  // Stars
+  for (const s of stars) {
+    // slow drift, wrap around
+    s.x = (s.x + s.vx + BW) % BW;
+    s.y = (s.y + s.vy + BH) % BH;
+    const twinkle = s.alpha * (0.6 + 0.4 * Math.sin(t * s.twinkleSpeed * 0.01 + s.twinkleOffset));
+    bgCtx.globalAlpha = twinkle;
+    bgCtx.fillStyle = '#ffffff';
+    bgCtx.beginPath();
+    bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    bgCtx.fill();
+  }
+
+  // Bright star clusters
+  bgCtx.globalAlpha = 1;
+  const BRIGHT = [
+    {x:0.22,y:0.18,c:'#aaddff'},{x:0.71,y:0.32,c:'#ffccaa'},
+    {x:0.48,y:0.72,c:'#ccaaff'},{x:0.88,y:0.55,c:'#aaffdd'},
+    {x:0.10,y:0.60,c:'#ffaacc'},{x:0.60,y:0.10,c:'#ffffff'},
+  ];
+  for (const b of BRIGHT) {
+    const bx = b.x * BW, by = b.y * BH;
+    const twinkle = 0.5 + 0.5 * Math.sin(t * 0.002 + bx);
+    const g = bgCtx.createRadialGradient(bx,by,0,bx,by,3.5);
+    g.addColorStop(0, b.c);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    bgCtx.globalAlpha = 0.6 + 0.4 * twinkle;
+    bgCtx.fillStyle = g;
+    bgCtx.beginPath();
+    bgCtx.arc(bx, by, 3.5, 0, Math.PI * 2);
+    bgCtx.fill();
+    // cross flare
+    bgCtx.globalAlpha = 0.15 * twinkle;
+    bgCtx.strokeStyle = b.c;
+    bgCtx.lineWidth = 0.5;
+    bgCtx.beginPath(); bgCtx.moveTo(bx-8,by); bgCtx.lineTo(bx+8,by); bgCtx.stroke();
+    bgCtx.beginPath(); bgCtx.moveTo(bx,by-8); bgCtx.lineTo(bx,by+8); bgCtx.stroke();
+  }
+  bgCtx.globalAlpha = 1;
+}
+
+// ═══════════════════════════════════════════════════════
+//  FOREGROUND: Three.js Galaxy Orb
+// ═══════════════════════════════════════════════════════
+const canvas   = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0); // transparent so bg shows through
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 500);
+camera.position.set(0, 0, 22);
+
+const N = 6000;
+
+const THEMES = {
+  galaxy: [[0.62,0.78,1.0],[1.0,0.55,0.85],[0.55,1.0,0.88],[1.0,0.85,0.4],[0.75,0.55,1.0],[1.0,1.0,1.0]],
+  fire:   [[1.0,0.18,0.05],[1.0,0.45,0.05],[1.0,0.72,0.1],[1.0,0.95,0.4],[0.9,0.3,0.1],[1.0,1.0,0.6]],
+  ocean:  [[0.05,0.35,0.9],[0.1,0.7,0.85],[0.0,0.9,0.75],[0.3,0.5,1.0],[0.05,0.2,0.6],[0.6,0.95,1.0]],
+  neon:   [[1.0,0.0,0.6],[0.0,1.0,0.5],[0.0,0.8,1.0],[1.0,0.0,1.0],[0.5,1.0,0.0],[1.0,1.0,0.0]],
+  gold:   [[1.0,0.84,0.0],[1.0,0.7,0.1],[0.9,0.6,0.05],[1.0,0.95,0.5],[0.8,0.5,0.0],[1.0,1.0,0.8]],
+  ice:    [[0.8,0.95,1.0],[0.55,0.85,1.0],[0.7,1.0,0.95],[1.0,1.0,1.0],[0.4,0.7,0.95],[0.9,0.98,1.0]],
+};
+let currentTheme = 'galaxy';
+
+const geometry   = new THREE.BufferGeometry();
+const positions  = new Float32Array(N * 3);
+const targets    = new Float32Array(N * 3);
+const colors     = new Float32Array(N * 3);
+const sizes      = new Float32Array(N);
+const velocities = new Float32Array(N * 3);
+
+function applyThemeColors(theme) {
+  const pal = THEMES[theme];
+  for (let i = 0; i < N; i++) {
+    const c = pal[Math.floor(Math.random() * pal.length)];
+    colors[i*3]=c[0]; colors[i*3+1]=c[1]; colors[i*3+2]=c[2];
+  }
+  geometry.attributes.aColor.needsUpdate = true;
+}
+
+for (let i = 0; i < N; i++) sizes[i] = 0.08 + Math.random() * 0.18;
+geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geometry.setAttribute('aColor',   new THREE.BufferAttribute(colors, 3));
+geometry.setAttribute('size',     new THREE.BufferAttribute(sizes, 1));
+applyThemeColors('galaxy');
+
+const material = new THREE.ShaderMaterial({
+  vertexShader: `
+    attribute float size;
+    attribute vec3 aColor;
+    varying vec3 vColor;
+    varying float vDist;
+    void main() {
+      vColor = aColor;
+      vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+      vDist = -mvPos.z;
+      gl_PointSize = size * (300.0 / vDist);
+      gl_Position = projectionMatrix * mvPos;
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vColor;
+    varying float vDist;
+    void main() {
+      float d = length(gl_PointCoord - vec2(0.5));
+      if (d > 0.5) discard;
+      float glow = 1.0 - smoothstep(0.0, 0.5, d);
+      glow = pow(glow, 1.4);
+      float alpha = glow * min(1.0, 22.0 / vDist);
+      gl_FragColor = vec4(vColor * (0.7 + glow * 0.8), alpha);
+    }
+  `,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+});
+
+const points = new THREE.Points(geometry, material);
+scene.add(points);
+
+// ── Shape Generators ──────────────────────────────────
+function genOrb(arr, n) {
+  for (let i = 0; i < n; i++) {
+    const u=Math.random(),v=Math.random();
+    const theta=2*Math.PI*u, phi=Math.acos(2*v-1), r=5*Math.cbrt(Math.random());
+    arr[i*3]=r*Math.sin(phi)*Math.cos(theta); arr[i*3+1]=r*Math.sin(phi)*Math.sin(theta); arr[i*3+2]=r*Math.cos(phi);
+  }
+}
+function genRing(arr, n) {
+  for (let i = 0; i < n; i++) {
+    const a=(i/n)*Math.PI*2+(Math.random()-0.5)*0.35, R=5.5+(Math.random()-0.5)*3.5;
+    arr[i*3]=Math.cos(a)*R; arr[i*3+1]=(Math.random()-0.5)*1.2; arr[i*3+2]=Math.sin(a)*R;
+  }
+}
+function genCube(arr, n) {
+  for (let i = 0; i < n; i++) {
+    const f=Math.floor(Math.random()*6),a=(Math.random()-0.5)*9,b=(Math.random()-0.5)*9,c=4.5;
+    const faces=[[a,b,c],[a,b,-c],[c,a,b],[-c,a,b],[a,c,b],[a,-c,b]];
+    arr[i*3]=faces[f][0]; arr[i*3+1]=faces[f][1]; arr[i*3+2]=faces[f][2];
+  }
+}
+function genHelix(arr, n) {
+  for (let i = 0; i < n; i++) {
+    const t=(i/n)*Math.PI*10-Math.PI*5, r=4.5+(Math.random()-0.5)*0.8;
+    arr[i*3]=Math.cos(t)*r; arr[i*3+1]=t*0.65+(Math.random()-0.5)*0.5; arr[i*3+2]=Math.sin(t)*r;
+  }
+}
+function genHeart(arr, n) {
+  for (let i = 0; i < n; i++) {
+    const t=(i/n)*Math.PI*2, noise=(Math.random()-0.5)*1.2;
+    const x=16*Math.pow(Math.sin(t),3);
+    const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+    arr[i*3]=x*0.38+noise; arr[i*3+1]=y*0.38+noise; arr[i*3+2]=(Math.random()-0.5)*3;
+  }
+}
+function genText(arr, n, text) {
+  const tw=512, th=160;
+  const tc=document.createElement('canvas');
+  tc.width=tw; tc.height=th;
+  const ctx=tc.getContext('2d');
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,tw,th);
+  const fs=Math.max(38,Math.min(108,Math.floor(360/Math.max(text.length,1))));
+  ctx.font=`900 ${fs}px Arial Black, Arial`;
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text.toUpperCase(), tw/2, th/2);
+  const data=ctx.getImageData(0,0,tw,th).data;
+  const pool=[]; const step=3;
+  for(let py=0;py<th;py+=step)
+    for(let px=0;px<tw;px+=step)
+      if(data[(py*tw+px)*4]>128) pool.push([px,py]);
+  if(pool.length===0){genOrb(arr,n);return;}
+  const sx=16/tw, sy=-5/th;
+  for(let i=0;i<n;i++){
+    const [px,py]=pool[Math.floor(Math.random()*pool.length)];
+    arr[i*3]  =(px-tw/2)*sx+(Math.random()-0.5)*step*sx*1.2;
+    arr[i*3+1]=(py-th/2)*sy+(Math.random()-0.5)*step*Math.abs(sy)*1.2;
+    arr[i*3+2]=(Math.random()-0.5)*1.8;
+  }
+}
+
+const SHAPES={orb:genOrb,ring:genRing,cube:genCube,helix:genHelix,heart:genHeart};
+let currentShape='orb';
+
+// ── State Machine ─────────────────────────────────────
+let state='idle', stateT=0;
+genOrb(positions,N); genOrb(targets,N);
+for(let i=0;i<N*3;i++) positions[i]=targets[i];
+geometry.attributes.position.needsUpdate=true;
+
+const snapPositions=new Float32Array(N*3);
+const explodedPositions=new Float32Array(N*3);
+
+function setExplosionVelocities(){
+  for(let i=0;i<N;i++){
+    const px=positions[i*3],py=positions[i*3+1],pz=positions[i*3+2];
+    const len=Math.sqrt(px*px+py*py+pz*pz)||1, pow=18+Math.random()*24;
+    velocities[i*3]  =(px/len+(Math.random()-0.5)*1.2)*pow;
+    velocities[i*3+1]=(py/len+(Math.random()-0.5)*1.2)*pow;
+    velocities[i*3+2]=(pz/len+(Math.random()-0.5)*1.2)*pow;
+  }
+}
+
+function explode(callback){
+  if(state==='exploding') return;
+  for(let i=0;i<N*3;i++) snapPositions[i]=positions[i];
+  setExplosionVelocities();
+  for(let i=0;i<N;i++){
+    explodedPositions[i*3]  =snapPositions[i*3]  +velocities[i*3];
+    explodedPositions[i*3+1]=snapPositions[i*3+1]+velocities[i*3+1];
+    explodedPositions[i*3+2]=snapPositions[i*3+2]+velocities[i*3+2];
+  }
+  state='exploding'; stateT=0;
+  setTimeout(()=>{
+    for(let i=0;i<N*3;i++) snapPositions[i]=explodedPositions[i];
+    if(callback) callback(); else SHAPES[currentShape](targets,N);
+    state='reforming'; stateT=0;
+  },900);
+}
+
+function setShape(name,el){
+  currentShape=name;
+  document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('mode-label').textContent=name.charAt(0).toUpperCase()+name.slice(1);
+  for(let i=0;i<N*3;i++) snapPositions[i]=positions[i];
+  SHAPES[name](targets,N); state='reforming'; stateT=0;
+}
+function setTheme(name,el){
+  currentTheme=name;
+  document.querySelectorAll('.th-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  applyThemeColors(name);
+}
+function applyText(){
+  const txt=document.getElementById('text-input').value.trim();
+  if(!txt) return;
+  document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mode-label').textContent=txt.toUpperCase();
+  explode(()=>genText(targets,N,txt));
+}
+
+document.getElementById('text-input').addEventListener('keydown',e=>{if(e.key==='Enter') applyText(); e.stopPropagation();});
+document.getElementById('text-input').addEventListener('mousedown',e=>e.stopPropagation());
+document.getElementById('text-go').addEventListener('mousedown',e=>e.stopPropagation());
+
+// ── Easing ────────────────────────────────────────────
+function easeOutExpo(t){return t===1?1:1-Math.pow(2,-10*t);}
+function easeOutBack(t){const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);}
+
+// ── Controls ──────────────────────────────────────────
+let isDragging=false,prevX=0,prevY=0,rotX=0.3,rotY=0.5,velX=0,velY=0.003,zoom=22;
+document.addEventListener('mousedown',e=>{
+  if(e.target.closest('#shape-picker')||e.target.closest('#theme-picker')||e.target.closest('#text-panel')) return;
+  isDragging=true; prevX=e.clientX; prevY=e.clientY; document.body.classList.add('grabbing');
+});
+document.addEventListener('mousemove',e=>{
+  if(!isDragging) return;
+  velY=(e.clientX-prevX)*0.008; velX=(e.clientY-prevY)*0.008;
+  rotY+=velY; rotX+=velX; prevX=e.clientX; prevY=e.clientY;
+});
+document.addEventListener('mouseup',()=>{isDragging=false; document.body.classList.remove('grabbing');});
+document.addEventListener('click',e=>{
+  if(e.target.closest('#shape-picker')||e.target.closest('#theme-picker')||e.target.closest('#text-panel')) return;
+  explode();
+});
+document.addEventListener('wheel',e=>{zoom=Math.max(8,Math.min(50,zoom+e.deltaY*0.03));});
+let lastTouch=null;
+document.addEventListener('touchstart',e=>{lastTouch=e.touches[0];});
+document.addEventListener('touchmove',e=>{
+  if(!lastTouch) return;
+  velY=(e.touches[0].clientX-lastTouch.clientX)*0.01; velX=(e.touches[0].clientY-lastTouch.clientY)*0.01;
+  rotY+=velY; rotX+=velX; lastTouch=e.touches[0]; e.preventDefault();
+},{passive:false});
+document.addEventListener('touchend',()=>{lastTouch=null;});
+
+// ── Main Loop ─────────────────────────────────────────
+const clock=new THREE.Clock();
+let frameCount=0;
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.05);
+  const elapsed=clock.elapsedTime;
+  frameCount++;
+
+  // Draw background every frame
+  drawBackground(frameCount);
+
+  // Orb rotation
+  if(!isDragging){rotY+=velY;rotX+=velX;velX*=0.92;velY*=0.92;velY+=0.0008;}
+  points.rotation.x=rotX; points.rotation.y=rotY;
+  camera.position.z+=(zoom-camera.position.z)*0.08;
+
+  // Particle state
+  if(state==='exploding'){
+    stateT=Math.min(stateT+dt*1.3,1);
+    const e=easeOutExpo(stateT);
+    for(let i=0;i<N;i++){
+      positions[i*3]  =snapPositions[i*3]  +(explodedPositions[i*3]  -snapPositions[i*3])*e;
+      positions[i*3+1]=snapPositions[i*3+1]+(explodedPositions[i*3+1]-snapPositions[i*3+1])*e;
+      positions[i*3+2]=snapPositions[i*3+2]+(explodedPositions[i*3+2]-snapPositions[i*3+2])*e;
+    }
+    if(stateT>=1) state='idle';
+  } else if(state==='reforming'){
+    stateT=Math.min(stateT+dt*0.9,1);
+    const e=easeOutBack(stateT);
+    for(let i=0;i<N;i++){
+      positions[i*3]  =snapPositions[i*3]  +(targets[i*3]  -snapPositions[i*3])*e;
+      positions[i*3+1]=snapPositions[i*3+1]+(targets[i*3+1]-snapPositions[i*3+1])*e;
+      positions[i*3+2]=snapPositions[i*3+2]+(targets[i*3+2]-snapPositions[i*3+2])*e;
+    }
+    if(stateT>=1){for(let i=0;i<N*3;i++) positions[i]=targets[i]; state='idle';}
+  } else {
+    const breath=Math.sin(elapsed*0.6)*0.012+1;
+    for(let i=0;i<N;i++){
+      positions[i*3]  =targets[i*3]  *breath;
+      positions[i*3+1]=targets[i*3+1]*breath;
+      positions[i*3+2]=targets[i*3+2]*breath;
+    }
+  }
+  geometry.attributes.position.needsUpdate=true;
+  renderer.render(scene,camera);
+}
+animate();
+
+// ── Resize ────────────────────────────────────────────
+window.addEventListener('resize',()=>{
+  BW=bgCanvas.width=window.innerWidth;
+  BH=bgCanvas.height=window.innerHeight;
+  // reposition stars
+  stars.forEach(s=>{s.x=Math.random()*BW; s.y=Math.random()*BH;});
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+

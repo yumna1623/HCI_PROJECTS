@@ -1,0 +1,76 @@
+Perfect! Let’s apply the **new formula** that includes **time**, so you can compare it with your old results.
+
+### ✅ New Formula
+
+```text
+Cognitive Effort = (100 − Accuracy) + (Time × k)
+```
+
+* `Accuracy` = % correct
+* `Time` = seconds taken to complete task
+* `k` = scaling factor (we’ll use k = 2 for your MVP)
+
+---
+
+### 1️⃣ Recall Example
+
+Old data:
+
+* Correct icons = 3
+* Total icons = 6 → Accuracy = (3/6)×100 = 50%
+* Old effort = 100 − 50 = 50
+
+Let’s assume **time taken = 12 seconds**, k = 2
+
+```text
+effort = (100 − 50) + (12 × 2)
+effort = 50 + 24
+effort = 74
+```
+
+| Metric           | Value |
+| ---------------- | ----- |
+| Accuracy         | 50%   |
+| Time Taken       | 12s   |
+| Cognitive Effort | 74    |
+
+✅ Now effort reflects **both mistakes and time taken**, not just accuracy.
+
+---
+
+### 2️⃣ Recognition Example
+
+Old data:
+
+* Correct selected = 5
+* Total icons = 6 → Accuracy = (5/6)×100 ≈ 83%
+* Old effort = 100 − 83 = 17
+
+Assume **time taken = 7 seconds**, k = 2
+
+```text
+effort = (100 − 83) + (7 × 2)
+effort = 17 + 14
+effort = 31
+```
+
+| Metric           | Value |
+| ---------------- | ----- |
+| Accuracy         | 83%   |
+| Time Taken       | 7s    |
+| Cognitive Effort | 31    |
+
+✅ Notice now **even perfect or high accuracy has effort > 0** if user took some time.
+
+---
+
+### 🔹 Comparison
+
+| Task        | Accuracy | Time | Old Effort | New Effort |
+| ----------- | -------- | ---- | ---------- | ---------- |
+| Recall      | 50%      | 12s  | 50         | 74         |
+| Recognition | 83%      | 7s   | 17         | 31         |
+
+* Recall → higher effort than recognition, matches HCI principle
+* Time now contributes → makes measurement more realistic
+

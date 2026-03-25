@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shape Catcher Pro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Shape Catcher <span>PRO</span></h1>
+    <div class="selection">
+      <p>Target Shape:</p>
+      <div class="btn-group">
+        <button onclick="startGame('🔺')">🔺</button>
+        <button onclick="startGame('🔵')">🔵</button>
+        <button onclick="startGame('⭐')">⭐</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="gameArea">
+    <div id="progressUI">
+      <div id="progressBar"></div>
+    </div>
+    
+    <div id="box">
+        <div class="box-glow"></div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="label">TIME</span>
+      <span class="value" id="time">15</span>
+    </div>
+    <div class="stat-card highlighted">
+      <span class="label">SCORE</span>
+      <span class="value" id="score">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="label">LIVES</span>
+      <span class="value" id="lives">3</span>
+    </div>
+  </div>
+
+  <div class="mini-stats">
+    <span>✅ <b id="correct">0</b></span>
+    <span>❌ <b id="wrong">0</b></span>
+    <span>🎯 <b id="accuracy">0%</b></span>
+  </div>
+</div>
+
+<div id="resultScreen">
+  <div class="resultCard">
+    <h2>Game Over</h2>
+    <h1 id="finalScoreDisplay">0</h1>
+    <p id="performance"></p>
+    <button class="retry-btn" onclick="location.reload()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
