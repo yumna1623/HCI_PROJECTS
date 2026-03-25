@@ -31,6 +31,13 @@ colors.forEach(color => {
   };
   colorContainer.appendChild(btn);
 });
+
+
+function updateLineCount() {
+  const span = document.getElementById("lineCount");
+  if(span) span.textContent = polylines.length;  // update dynamic count
+}
+
 function updateSelection(){
   document.querySelectorAll("#color-palette .palette-button").forEach(btn=>{
     btn.classList.toggle("selected", btn.style.backgroundColor===currentColor);
@@ -57,6 +64,7 @@ function draw(){
       ctx.fill();
     });
   });
+  updateLineCount(); //  ADDED THIS
 }
 
 // NEAREST POINT
@@ -178,6 +186,18 @@ canvas.addEventListener("mousemove",(e)=>{
     draw();
   }
 });
+
+
+// added extra event listener for mouse position
+canvas.addEventListener("mousemove", (e)=>{
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor(e.clientX - rect.left);
+    const y = Math.floor(e.clientY - rect.top);
+    document.getElementById("mousePos").textContent = `Mouse: (${x}, ${y})`;
+});
+
+
+
 
 canvas.addEventListener("mouseup",()=>{
   dragging=false;
