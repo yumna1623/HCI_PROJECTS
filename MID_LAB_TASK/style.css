@@ -74,25 +74,26 @@ canvas {
   background-image: radial-gradient(#555 1px, transparent 1px);
   background-size: 20px 20px;
   display: block;
+}.instructions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0,0,0,0.6);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+    text-align: left; /* align text to the right */
 }
-/* Floating instructions on top-right */
-.instructions {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  color: #00f7ff;
-  font-size: 14px;
-  text-align: right;
-  background: rgba(0,0,0,0.5);
-  padding: 5px 10px;
-  border-radius: 5px;
-  z-index: 200;
-}
+
 .instructions ul {
-  margin: 3px 0 0 0;
-  padding: 0;
-  list-style: disc inside;
+    list-style: none;
+    margin: 5px 0 0 0;
+    padding: 0;
 }
-.instructions li {
-  margin: 2px 0;
+
+.instructions ul li {
+    margin: 3px 0;
+    text-align: left; /* make each line right-aligned */
 }

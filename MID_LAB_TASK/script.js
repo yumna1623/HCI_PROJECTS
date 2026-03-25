@@ -103,6 +103,15 @@ function insertPoint(x,y){
   });
   if(best){ saveState(); polylines[best.pi].splice(best.index,0,best.pos); draw(); }
 }
+function refreshCanvas(){
+    // finalize current polyline if it exists
+    if(currentPolyline && currentPolyline.length>0){
+        // Already in polylines array, no need to push again
+        currentPolyline = null;  // stop drawing
+    }
+    draw(); // redraw everything
+    alert("Canvas refreshed!");
+}
 
 // MOUSE EVENTS
 canvas.addEventListener("mousedown",(e)=>{
@@ -141,6 +150,7 @@ canvas.addEventListener("mousedown",(e)=>{
   else if(mode==="insert"){
     insertPoint(x,y);
   }
+  
 });
 
 canvas.addEventListener("mousemove",(e)=>{
@@ -185,7 +195,9 @@ window.addEventListener("keydown",(e)=>{
   if(key==="b") setMode("begin");
   else if(key==="d") setMode("delete");
   else if(key==="m") setMode("move");
-  else if(key==="r") draw();
+  else if(key==="f") { // F for refresh
+      refreshCanvas();
+  }
   else if(key==="q"){ alert("Exiting editor"); window.close(); }
 });
 
