@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced Polyline Editor</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="toolbar">
+    <button onclick="setMode('begin')">Draw</button>
+    <button onclick="setMode('move')">Move Point</button>
+    <button onclick="setMode('moveShape')">Move Shape</button>
+    <button onclick="setMode('delete')">Delete</button>
+    <button onclick="setMode('insert')">Insert</button>
+    <button onclick="undo()">Undo</button>
+    <button onclick="redo()">Redo</button>
+    <button onclick="clearCanvas()">Clear</button>
+    <button onclick="saveData()">Save</button>
+    <button onclick="loadData()">Load</button>
+  </div>
+  <p>Mode: <span id="mode">none</span></p>
+</div>
+
+<!-- Instructions floating on top-right -->
+<div class="instructions">
+  <strong>Keyboard Shortcuts:</strong>
+  <ul>
+    <li><b>b</b> → Begin (create new polyline)</li>
+    <li><b>d</b> → Delete (remove selected point)</li>
+    <li><b>m</b> → Move (drag selected point)</li>
+    <li><b>r</b> → Redraw (refresh canvas)</li>
+    <li><b>q</b> → Quit (exit editor)</li>
+  </ul>
+</div>
+
+<div class="main-container">
+  <div class="color-palette" id="color-palette"></div>
+  <div class="canvas-container">
+    <canvas id="canvas" width="2000" height="2000"></canvas>
+  </div>
+</div>
+
+<div class="main-container">
+  <div class="color-palette" id="color-palette"></div>
+  <div class="canvas-container">
+    <canvas id="canvas" width="2000" height="2000"></canvas>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
