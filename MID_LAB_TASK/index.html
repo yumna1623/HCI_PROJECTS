@@ -402,7 +402,13 @@ window.addEventListener('keydown', e => {
     if (k === 'm')      changeMode('MOVE_POINT');
     if (k === 's')      changeMode('MOVE_SHAPE');
     if (k === 'r')      { saveState(); polys = []; updateUI(); draw(); }
-    if (k === 'enter')  { isDrawing = false; draw(); }
+    // if (k === 'enter')  { isDrawing = false; draw(); }
+    if (k === 'enter') {
+    isDrawing = false;
+    currentMode = 'IDLE'; // or keep BEGIN but stop continuation
+    selectedPoly = -1;
+    draw();
+}
     if (k === 'escape') changeMode('IDLE');
 });
 
