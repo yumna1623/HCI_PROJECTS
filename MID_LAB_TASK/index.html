@@ -113,7 +113,7 @@ body {
                 <div class="flex justify-between"><span class="kbd-box">Ctrl+O</span><span class="text-[10px]">Load file</span></div>
                 <div class="flex justify-between"><span class="kbd-box">Ctrl+Z/Y</span><span class="text-[10px]">Undo/Redo</span></div>
                 <div class="flex justify-between"><span class="kbd-box">RMB drag</span><span class="text-[10px]">Pan canvas</span></div>
-                <div class="flex justify-between"><span class="kbd-box">Scroll</span><span class="text-[10px]">Zoom</span></div>
+                <div class="flex justify-between"><span class="kbd-box">Exit</span><span class="text-[10px]">q</span></div>
             </div>
         </section>
     </aside>
@@ -173,14 +173,136 @@ function updatePalette() {
 }
 updatePalette();
 
+
+
+function draw() {
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+    ctx.clearRect(-offsetX / scale, -offsetY / scale, canvas.width / scale, canvas.height / scale);
+
+    // ── All polylines ──
+    polys.forEach(p => {
+        if (p.length < 2) return;
+        for (let i = 1; i < p.length; i++) {
+            ctx.beginPath();
+            ctx.moveTo(p[i - 1].x, p[i - 1].y);
+            ctx.lineTo(p[i].x,     p[i].y);
+            ctx.strokeStyle = p[i - 1].color;
+            ctx.lineWidth   = 2;
+            ctx.stroke();
+        }
+      p.forEach((pt, idx) => {
+    const isSelectedShape =
+        (currentMode === 'MOVE_SHAPE' || currentMode === 'MOVE_SHAPE_DRAG') &&
+        polys.indexOf(p) === selectedPoly;
+
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, isSelectedShape ? 6 : 4, 0, Math.PI * 2);
+
+    // Base fill
+    ctx.fillStyle = pt.color;
+    ctx.fill();
+
+    // ✨ Glow effect for selected shape
+    if (isSelectedShape) {
+        ctx.shadowColor = pt.color;
+        ctx.shadowBlur = 12;
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = pt.color;
+        ctx.fill();
+
+        // White outline for clarity
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Reset shadow (VERY IMPORTANT)
+        ctx.shadowBlur = 0;
+    }
+});
+    });
+
+    // ── INSERT mode: hovered segment highlight + ghost point ──
+    if (hoveredSeg) {
+        const poly = polys[hoveredSeg.polyIdx];
+        const a    = poly[hoveredSeg.segIdx];
+        const b    = poly[hoveredSeg.segIdx + 1];
+
+        // Highlight the segment being targeted
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = 'rgba(34,197,94,0.7)';
+        ctx.lineWidth   = 3;
+        ctx.stroke();
+
+        // Dashed drop line from cursor to projected point
+        ctx.beginPath();
+        ctx.moveTo(hoveredSeg.px, hoveredSeg.py);
+        ctx.lineTo(mousePos.x, mousePos.y);
+        ctx.strokeStyle = 'rgba(234,179,8,0.6)';
+        ctx.lineWidth   = 1;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Ghost point at projected position
+        ctx.beginPath();
+        ctx.arc(hoveredSeg.px, hoveredSeg.py, 6, 0, Math.PI * 2);
+        ctx.fillStyle   = 'rgba(34,197,94,0.9)';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth   = 1.5;
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // ── BEGIN mode: rubber-band line to cursor ──
+    if (isDrawing && polys.length > 0) {
+        const last = polys[polys.length - 1];
+        if (last.length > 0) {
+            const tip = last[last.length - 1];
+            ctx.beginPath();
+            ctx.moveTo(tip.x, tip.y);
+            ctx.lineTo(mousePos.x, mousePos.y);
+            ctx.strokeStyle = 'rgba(34,197,94,0.4)';
+            ctx.lineWidth   = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+}
+
 // ── Resize ────────────────────────────────────────────────────────────────────
 function resizeCanvas() {
     canvas.width  = wrapper.clientWidth;
     canvas.height = wrapper.clientHeight;
     draw();
 }
+
 window.onresize = resizeCanvas;
 setTimeout(resizeCanvas, 0);
+
+function changeMode(m) {
+    currentMode   = m;
+    selectedPoly  = -1;
+    draggingPoint = null;
+    hoveredSeg    = null;
+
+    // ✅ Strong reset for BEGIN
+    if (m === 'BEGIN') {
+        isDrawing = false;
+    } else {
+        isDrawing = false;
+    }
+
+    document.getElementById('mode-text').innerText    = m;
+    document.getElementById('current-tool').innerText = m;
+
+    updateUI();
+    draw();
+}
 
 // ── Toolbar wiring ────────────────────────────────────────────────────────────
 document.getElementById('tool-b').onclick          = () => changeMode('BEGIN');
@@ -195,18 +317,7 @@ document.getElementById('tool-save').onclick       = saveToFile;
 document.getElementById('tool-load').onclick       = () => document.getElementById('file-input').click();
 document.getElementById('file-input').onchange     = e => loadFromFile(e.target.files[0]);
 
-function changeMode(m) {
-    currentMode   = m;
-    selectedPoly  = -1;
-    draggingPoint = null;
-    hoveredSeg    = null;
-    // Keep isDrawing alive only while staying in BEGIN
-    if (m !== 'BEGIN') isDrawing = false;
-    document.getElementById('mode-text').innerText    = m;
-    document.getElementById('current-tool').innerText = m;
-    updateUI();
-    draw();
-}
+
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function updateUI() {
@@ -361,6 +472,7 @@ canvas.addEventListener('mousemove', e => {
         polys[selectedPoly].forEach(pt => { pt.x += dx; pt.y += dy; });
         moveShapeStart = { x: mousePos.x, y: mousePos.y };
     }
+    
 
     // Live segment highlight in INSERT mode
     hoveredSeg = (currentMode === 'INSERT') ? findClosestSegment(mousePos.x, mousePos.y) : null;
@@ -410,82 +522,13 @@ window.addEventListener('keydown', e => {
     draw();
 }
     if (k === 'escape') changeMode('IDLE');
+     if (e.key.toLowerCase() === 'q') {
+        window.close(); // ✅ works here
+    }
 });
 
 // ── Draw ──────────────────────────────────────────────────────────────────────
-function draw() {
-    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-    ctx.clearRect(-offsetX / scale, -offsetY / scale, canvas.width / scale, canvas.height / scale);
 
-    // ── All polylines ──
-    polys.forEach(p => {
-        if (p.length < 2) return;
-        for (let i = 1; i < p.length; i++) {
-            ctx.beginPath();
-            ctx.moveTo(p[i - 1].x, p[i - 1].y);
-            ctx.lineTo(p[i].x,     p[i].y);
-            ctx.strokeStyle = p[i - 1].color;
-            ctx.lineWidth   = 2;
-            ctx.stroke();
-        }
-        p.forEach(pt => {
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-            ctx.fillStyle = pt.color;
-            ctx.fill();
-        });
-    });
-
-    // ── INSERT mode: hovered segment highlight + ghost point ──
-    if (hoveredSeg) {
-        const poly = polys[hoveredSeg.polyIdx];
-        const a    = poly[hoveredSeg.segIdx];
-        const b    = poly[hoveredSeg.segIdx + 1];
-
-        // Highlight the segment being targeted
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = 'rgba(34,197,94,0.7)';
-        ctx.lineWidth   = 3;
-        ctx.stroke();
-
-        // Dashed drop line from cursor to projected point
-        ctx.beginPath();
-        ctx.moveTo(hoveredSeg.px, hoveredSeg.py);
-        ctx.lineTo(mousePos.x, mousePos.y);
-        ctx.strokeStyle = 'rgba(234,179,8,0.6)';
-        ctx.lineWidth   = 1;
-        ctx.setLineDash([4, 3]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Ghost point at projected position
-        ctx.beginPath();
-        ctx.arc(hoveredSeg.px, hoveredSeg.py, 6, 0, Math.PI * 2);
-        ctx.fillStyle   = 'rgba(34,197,94,0.9)';
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth   = 1.5;
-        ctx.fill();
-        ctx.stroke();
-    }
-
-    // ── BEGIN mode: rubber-band line to cursor ──
-    if (isDrawing && polys.length > 0) {
-        const last = polys[polys.length - 1];
-        if (last.length > 0) {
-            const tip = last[last.length - 1];
-            ctx.beginPath();
-            ctx.moveTo(tip.x, tip.y);
-            ctx.lineTo(mousePos.x, mousePos.y);
-            ctx.strokeStyle = 'rgba(34,197,94,0.4)';
-            ctx.lineWidth   = 2;
-            ctx.setLineDash([6, 4]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-    }
-}
 
 // ── Undo / redo ───────────────────────────────────────────────────────────────
 function saveState() {
@@ -496,13 +539,30 @@ function undo() {
     if (!undoStack.length) return;
     redoStack.push(JSON.stringify(polys));
     polys = JSON.parse(undoStack.pop());
-    updateUI(); draw();
+
+    // ✅ FIX: reset interaction states
+    isDrawing = false;
+    draggingPoint = null;
+    selectedPoly = -1;
+    hoveredSeg = null;
+
+    updateUI();
+    draw();
 }
+
 function redo() {
     if (!redoStack.length) return;
     undoStack.push(JSON.stringify(polys));
     polys = JSON.parse(redoStack.pop());
-    updateUI(); draw();
+
+    // ✅ FIX: reset interaction states
+    isDrawing = false;
+    draggingPoint = null;
+    selectedPoly = -1;
+    hoveredSeg = null;
+
+    updateUI();
+    draw();
 }
 
 // ── Save to .json file ────────────────────────────────────────────────────────
