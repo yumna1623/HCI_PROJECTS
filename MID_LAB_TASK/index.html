@@ -60,7 +60,7 @@ body {
 
 <!-- Toolbar -->
 <div class="bg-slate-900 p-2 flex flex-wrap gap-2 shadow-md items-center">
-    <span class="text-white font-bold text-sm">Tool:</span>
+    <span class="text-white font-bold text-sm">Tools:</span>
     <button id="tool-b"          class="btn-tool px-3 py-1 rounded font-bold">B 🖊</button>
     <button id="tool-i"          class="btn-tool px-3 py-1 rounded font-bold">I ✚</button>
     <button id="tool-d"          class="btn-tool px-3 py-1 rounded font-bold">D 🗑</button>
@@ -613,8 +613,20 @@ function flashStatus(msg) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 resizeCanvas();
-draw();
+
+//  FORCE RESET STATE ON LOAD
+currentMode = 'IDLE';
+isDrawing = false;
+selectedPoly = -1;
+draggingPoint = null;
+hoveredSeg = null;
+
+// update UI properly
+document.getElementById('mode-text').innerText = 'IDLE';
+document.getElementById('current-tool').innerText = 'IDLE';
+
 updateUI();
+draw();
 </script>
 </body>
 </html>
