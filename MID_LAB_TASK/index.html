@@ -107,7 +107,6 @@ body {
                 <div class="flex justify-between"><span class="kbd-box">M</span><span class="text-[10px]">Move point</span></div>
                 <div class="flex justify-between"><span class="kbd-box">S</span><span class="text-[10px]">Move shape</span></div>
                 <div class="flex justify-between"><span class="kbd-box">R</span><span class="text-[10px]">Reset all</span></div>
-                <div class="flex justify-between"><span class="kbd-box">Enter</span><span class="text-[10px]">End segment</span></div>
                 <div class="flex justify-between"><span class="kbd-box">Esc</span><span class="text-[10px]">Idle</span></div>
                 <div class="flex justify-between"><span class="kbd-box">Ctrl+S</span><span class="text-[10px]">Save file</span></div>
                 <div class="flex justify-between"><span class="kbd-box">Ctrl+O</span><span class="text-[10px]">Load file</span></div>
@@ -284,20 +283,44 @@ function resizeCanvas() {
 window.onresize = resizeCanvas;
 setTimeout(resizeCanvas, 0);
 
-function changeMode(m) {
-    currentMode   = m;
-    selectedPoly  = -1;
-    draggingPoint = null;
-    hoveredSeg    = null;
+window.onload = () => {
+    changeMode('IDLE');
+};
 
-    // ✅ Strong reset for BEGIN
-    if (m === 'BEGIN') {
-        isDrawing = false;
-    } else {
+function changeMode(m) {
+    currentMode = m;
+
+    selectedPoly = -1;
+    draggingPoint = null;
+    hoveredSeg = null;
+
+    if (m !== 'BEGIN') {
         isDrawing = false;
     }
 
-    document.getElementById('mode-text').innerText    = m;
+    document.querySelectorAll('.btn-tool').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    const map = {
+        'BEGIN': 'tool-b',
+        'INSERT': 'tool-i',
+        'DELETE': 'tool-d',
+        'MOVE_POINT': 'tool-m',
+        'MOVE_SHAPE': 'tool-move-shape'
+    };
+
+    if (map[m]) {
+        document.getElementById(map[m]).classList.add('active');
+    }
+
+    if (m === 'IDLE') {
+        document.querySelectorAll('.btn-tool').forEach(btn => {
+            btn.classList.remove('active');
+        });
+    }
+
+    document.getElementById('mode-text').innerText = m;
     document.getElementById('current-tool').innerText = m;
 
     updateUI();
@@ -310,7 +333,7 @@ document.getElementById('tool-i').onclick          = () => changeMode('INSERT');
 document.getElementById('tool-d').onclick          = () => changeMode('DELETE');
 document.getElementById('tool-m').onclick          = () => changeMode('MOVE_POINT');
 document.getElementById('tool-move-shape').onclick = () => changeMode('MOVE_SHAPE');
-document.getElementById('tool-r').onclick          = () => { saveState(); polys = []; updateUI(); draw(); };
+document.getElementById('tool-r').onclick          = () => { saveState(); polys = []; updateUI(); changeMode('IDLE'); };
 document.getElementById('tool-undo').onclick       = undo;
 document.getElementById('tool-redo').onclick       = redo;
 document.getElementById('tool-save').onclick       = saveToFile;
@@ -513,13 +536,10 @@ window.addEventListener('keydown', e => {
     if (k === 'd')      changeMode('DELETE');
     if (k === 'm')      changeMode('MOVE_POINT');
     if (k === 's')      changeMode('MOVE_SHAPE');
-    if (k === 'r')      { saveState(); polys = []; updateUI(); draw(); }
-    // if (k === 'enter')  { isDrawing = false; draw(); }
-    if (k === 'enter') {
+    if (k === 'r')      { saveState(); polys = []; updateUI(); changeMode('IDLE'); }
+if (k === 'enter') {
     isDrawing = false;
-    currentMode = 'IDLE'; // or keep BEGIN but stop continuation
-    selectedPoly = -1;
-    draw();
+    changeMode('IDLE'); // ✅ FIXED
 }
     if (k === 'escape') changeMode('IDLE');
      if (e.key.toLowerCase() === 'q') {
@@ -614,16 +634,8 @@ function flashStatus(msg) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 resizeCanvas();
 
-//  FORCE RESET STATE ON LOAD
-currentMode = 'IDLE';
-isDrawing = false;
-selectedPoly = -1;
-draggingPoint = null;
-hoveredSeg = null;
 
-// update UI properly
-document.getElementById('mode-text').innerText = 'IDLE';
-document.getElementById('current-tool').innerText = 'IDLE';
+changeMode('IDLE');
 
 updateUI();
 draw();
