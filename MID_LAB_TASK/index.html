@@ -1,703 +1,918 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Polyline Editor</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #0f172a;
-    color: #e2e8f0;
-    overflow: hidden;
-    user-select: none;
-    margin: 0;
-    height: 100vh;
-}
-.canvas-bg {
-    background-color: #1e1e2f;
-    background-image: radial-gradient(#334155 1px, transparent 1px);
-    background-size: 25px 25px;
-    cursor: grab;
-    position: relative;
-}
-.btn-tool {
-    transition: all 0.15s;
-    border: 1px solid transparent;
-}
-.btn-tool:hover { background-color: #334155; border-color: #64748b; }
-.btn-tool.active { background-color: #14b8a6; border-color: #0f766e; color: white; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Polyline Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #0f172a;
+        color: #e2e8f0;
+        overflow: hidden;
+        user-select: none;
+        margin: 0;
+        height: 100vh;
+      }
+      .canvas-bg {
+        background-color: #1e1e2f;
+        background-image: radial-gradient(#334155 1px, transparent 1px);
+        background-size: 25px 25px;
+        cursor: grab;
+        position: relative;
+      }
+      .btn-tool {
+        transition: all 0.15s;
+        border: 1px solid transparent;
+      }
+      .btn-tool:hover {
+        background-color: #334155;
+        border-color: #64748b;
+      }
+      .btn-tool.active {
+        background-color: #14b8a6;
+        border-color: #0f766e;
+        color: white;
+      }
 
-.kbd-box {
-    background: #334155;
-    border: 1px solid #475569;
-    padding: 2px 5px;
-    border-radius: 4px;
-    font-weight: 800;
-    font-size: 0.7rem;
-    color: #e2e8f0;
-}
-#color-palette div {
-    border: 2px solid #475569;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: inline-block;
-}
-#color-palette div.selected {
-    border-color: #14b8a6;
-    box-shadow: 0 0 5px #14b8a6;
-}
-#mode-badge, #hint-text {
-    backdrop-filter: blur(8px);
-    color: white;
-}
-button:disabled {
-    cursor: not-allowed;
-    filter: grayscale(80%);
-}
-</style>
-</head>
-<body class="flex flex-col h-screen">
-
-<!-- Toolbar -->
-<div class="bg-slate-900 p-2 flex flex-wrap gap-2 shadow-md items-center">
-    <span class="text-white font-bold text-sm">Tools:</span>
-    <button id="tool-b"          class="btn-tool px-3 py-1 rounded font-bold">B 🖊</button>
-    <button id="tool-i"          class="btn-tool px-3 py-1 rounded font-bold">I ✚</button>
-    <button id="tool-d"          class="btn-tool px-3 py-1 rounded font-bold">D 🗑</button>
-    <button id="tool-m"          class="btn-tool px-3 py-1 rounded font-bold">M ✋</button>
-    <button id="tool-move-shape" class="btn-tool px-3 py-1 rounded font-bold">S 🔀</button>
-    <button id="tool-r"          class="btn-tool px-3 py-1 rounded font-bold">R 🔄</button>
-    <button id="tool-undo"       class="btn-tool px-3 py-1 rounded font-bold">↺ Undo</button>
-    <button id="tool-redo"       class="btn-tool px-3 py-1 rounded font-bold">↻ Redo</button>
-    <button id="tool-save"       class="btn-tool px-3 py-1 rounded font-bold text-green-400">💾 Save</button>
-    <button id="tool-load"       class="btn-tool px-3 py-1 rounded font-bold text-blue-400">📂 Load</button>
-    <input type="file" id="file-input" accept=".json" style="display:none">
-    <span class="text-white ml-auto font-bold text-sm">Tool: <span id="current-tool">IDLE</span></span>
-</div>
-
-<div class="flex flex-1 overflow-hidden">
-
-    <!-- Canvas -->
-    <div id="canvas-container" class="flex-grow canvas-bg">
-        <canvas id="mainCanvas"></canvas>
-
-        <div id="mode-badge" class="absolute top-4 left-4 px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-2 shadow-sm">
-            <span id="mode-dot" class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"></span>
-            MODE: <span id="mode-text">IDLE</span>
-        </div>
-
-        <div id="hint-text" class="absolute bottom-8 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-medium bg-white/10">
-            B = draw · I = insert point on segment · M = move point · S = move shape · Ctrl+S/O = save/load
-        </div>
+      .kbd-box {
+        background: #334155;
+        border: 1px solid #475569;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-weight: 800;
+        font-size: 0.7rem;
+        color: #e2e8f0;
+      }
+      #color-palette div {
+        border: 2px solid #475569;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      #color-palette div.selected {
+        border-color: #14b8a6;
+        box-shadow: 0 0 5px #14b8a6;
+      }
+      #mode-badge,
+      #hint-text {
+        backdrop-filter: blur(8px);
+        color: white;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        filter: grayscale(80%);
+      }
+    </style>
+  </head>
+  <body class="flex flex-col h-screen">
+    <!-- Toolbar -->
+    <div class="bg-slate-900 p-2 flex flex-wrap gap-2 shadow-md items-center">
+      <span class="text-white font-bold text-sm">Tools:</span>
+      <button id="tool-b" class="btn-tool px-3 py-1 rounded font-bold">
+        B 🖊
+      </button>
+      <button id="tool-i" class="btn-tool px-3 py-1 rounded font-bold">
+        I ✚
+      </button>
+      <button id="tool-d" class="btn-tool px-3 py-1 rounded font-bold">
+        D 🗑
+      </button>
+      <button id="tool-m" class="btn-tool px-3 py-1 rounded font-bold">
+        M ✋
+      </button>
+      <button id="tool-move-shape" class="btn-tool px-3 py-1 rounded font-bold">
+        S 🔀
+      </button>
+      <button id="tool-r" class="btn-tool px-3 py-1 rounded font-bold">
+        R 🔄
+      </button>
+      <button id="tool-undo" class="btn-tool px-3 py-1 rounded font-bold">
+        ↺ Undo
+      </button>
+      <button id="tool-redo" class="btn-tool px-3 py-1 rounded font-bold">
+        ↻ Redo
+      </button>
+      <button
+        id="tool-save"
+        class="btn-tool px-3 py-1 rounded font-bold text-green-400"
+      >
+        💾 Save
+      </button>
+      <button
+        id="tool-load"
+        class="btn-tool px-3 py-1 rounded font-bold text-blue-400"
+      >
+        📂 Load
+      </button>
+      <input type="file" id="file-input" accept=".json" style="display: none" />
+      <span class="text-white ml-auto font-bold text-sm"
+        >Tool: <span id="current-tool">IDLE</span></span
+      >
     </div>
 
-    <!-- Sidebar -->
-    <aside class="w-56 border-l border-slate-700 bg-slate-900 p-4 flex flex-col gap-6 overflow-y-auto">
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Canvas -->
+      <div id="canvas-container" class="flex-grow canvas-bg">
+        <canvas id="mainCanvas"></canvas>
+
+        <div
+          id="mode-badge"
+          class="absolute top-4 left-4 px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-2 shadow-sm"
+        >
+          <span
+            id="mode-dot"
+            class="w-2 h-2 rounded-full bg-slate-400 animate-pulse"
+          ></span>
+          MODE: <span id="mode-text">IDLE</span>
+        </div>
+
+        <div
+          id="hint-text"
+          class="absolute bottom-8 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[10px] font-medium bg-white/10"
+        >
+          B = draw · I = insert point on segment · M = move point · S = move
+          shape · Ctrl+S/O = save/load
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside
+        class="w-56 border-l border-slate-700 bg-slate-900 p-4 flex flex-col gap-6 overflow-y-auto"
+      >
         <section>
-            <h3 class="text-[10px] font-black uppercase tracking-widest mb-2">Colors</h3>
-            <div id="color-palette" class="flex flex-wrap gap-2"></div>
+          <h3 class="text-[10px] font-black uppercase tracking-widest mb-2">
+            Colors
+          </h3>
+          <div id="color-palette" class="flex flex-wrap gap-2"></div>
         </section>
 
         <section>
-            <h3 class="text-[10px] font-black uppercase tracking-widest mb-2">Shortcuts</h3>
-            <div class="space-y-2">
-                <div class="flex justify-between"><span class="kbd-box">B</span><span class="text-[10px]">Begin draw</span></div>
-                <div class="flex justify-between"><span class="kbd-box">I</span><span class="text-[10px]">Insert point</span></div>
-                <div class="flex justify-between"><span class="kbd-box">D</span><span class="text-[10px]">Delete point</span></div>
-                <div class="flex justify-between"><span class="kbd-box">M</span><span class="text-[10px]">Move point</span></div>
-                <div class="flex justify-between"><span class="kbd-box">S</span><span class="text-[10px]">Move shape</span></div>
-                <div class="flex justify-between"><span class="kbd-box">R</span><span class="text-[10px]">Reset all</span></div>
-                <div class="flex justify-between"><span class="kbd-box">Esc</span><span class="text-[10px]">Idle</span></div>
-                <div class="flex justify-between"><span class="kbd-box">Ctrl+S</span><span class="text-[10px]">Save file</span></div>
-                <div class="flex justify-between"><span class="kbd-box">Ctrl+O</span><span class="text-[10px]">Load file</span></div>
-                <div class="flex justify-between"><span class="kbd-box">Ctrl+Z/Y</span><span class="text-[10px]">Undo/Redo</span></div>
-                <div class="flex justify-between"><span class="kbd-box">RMB drag</span><span class="text-[10px]">Pan canvas</span></div>
-                <div class="flex justify-between"><span class="kbd-box">q</span><span class="text-[10px]">Exit</span></div>
+          <h3 class="text-[10px] font-black uppercase tracking-widest mb-2">
+            Shortcuts
+          </h3>
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="kbd-box">B</span
+              ><span class="text-[10px]">Begin draw</span>
             </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">I</span
+              ><span class="text-[10px]">Insert point</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">D</span
+              ><span class="text-[10px]">Delete point</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">M</span
+              ><span class="text-[10px]">Move point</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">S</span
+              ><span class="text-[10px]">Move shape</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">R</span
+              ><span class="text-[10px]">Reset all</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">Esc</span
+              ><span class="text-[10px]">Idle</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">Ctrl+S</span
+              ><span class="text-[10px]">Save file</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">Ctrl+O</span
+              ><span class="text-[10px]">Load file</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">Ctrl+Z/Y</span
+              ><span class="text-[10px]">Undo/Redo</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">RMB drag</span
+              ><span class="text-[10px]">Pan canvas</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">scroll</span>
+              <span class="text-[10px]">Zoom in / out</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="kbd-box">Q</span
+              ><span class="text-[10px]">Exit</span>
+            </div>
+          </div>
         </section>
-    </aside>
-</div>
+      </aside>
+    </div>
 
-<!-- Footer -->
-<footer class="bg-slate-800 text-slate-300 px-5 py-2 flex justify-between text-[10px] font-medium">
-    <span>Status: <span id="sys-status" class="text-white">Ready</span></span>
-    <span>Mouse: <span id="coords" class="text-white">(0,0)</span></span>
-    <span>Polylines: <span id="poly-count" class="text-green-400 font-bold">0</span></span>
-</footer>
+    <!-- Footer -->
+    <footer
+      class="bg-slate-800 text-slate-300 px-5 py-2 flex justify-between text-[10px] font-medium"
+    >
+      <span>Status: <span id="sys-status" class="text-white">Ready</span></span>
+      <span>Mouse: <span id="coords" class="text-white">(0,0)</span></span>
+      <span
+        >Polylines:
+        <span id="poly-count" class="text-green-400 font-bold">0</span></span
+      >
+    </footer>
 
-<script>
-const canvas  = document.getElementById('mainCanvas');
-const ctx     = canvas.getContext('2d');
-const wrapper = document.getElementById('canvas-container');
+    <script>
+      const canvas = document.getElementById("mainCanvas");
+      const ctx = canvas.getContext("2d");
+      const wrapper = document.getElementById("canvas-container");
 
-let polys = [], undoStack = [], redoStack = [];
-let currentMode = 'IDLE', isDrawing = false;
-let mousePos    = { x: 0, y: 0 };
-let currentColor = 'cyan';
+      let hoverPoint = null;
+      let polys = [],
+        undoStack = [],
+        redoStack = [];
+      let currentMode = "IDLE",
+        isDrawing = false;
+      let mousePos = { x: 0, y: 0 };
+      let currentColor = "cyan";
 
-const SNAP_DIST = 15;   // px — snap radius for existing points
-const SEG_SNAP  = 10;   // px — snap radius for segment hover in INSERT mode
+      const SNAP_DIST = 15; // px — snap radius for existing points
+      const SEG_SNAP = 10; // px — snap radius for segment hover in INSERT mode
 
-// Pan / zoom state
-let offsetX = 0, offsetY = 0, scale = 1;
-let isPanning = false, panStart = { x: 0, y: 0 };
+      // Pan / zoom state
+      let offsetX = 0,
+        offsetY = 0,
+        scale = 1;
+      let isPanning = false,
+        panStart = { x: 0, y: 0 };
 
-// Drag state (MOVE_POINT)
-let draggingPoint = null;   // { poly, point }
+      // Drag state (MOVE_POINT)
+      let draggingPoint = null; // { poly, point }
 
-// Move-shape state
-let selectedPoly   = -1;
-let moveShapeStart = { x: 0, y: 0 };
+      // Move-shape state
+      let selectedPoly = -1;
+      let moveShapeStart = { x: 0, y: 0 };
 
-// INSERT mode: segment + projected point under cursor
-let hoveredSeg = null;      // { polyIdx, segIdx, px, py } | null
+      // INSERT mode: segment + projected point under cursor
+      let hoveredSeg = null; // { polyIdx, segIdx, px, py } | null
 
-// ── Color palette ─────────────────────────────────────────────────────────────
-const colors = [
-    'cyan','red','yellow','green','blue','magenta',
-    'orange','white','pink','lime','purple','teal',
-    'brown','gray','gold','silver'
-];
-const paletteContainer = document.getElementById('color-palette');
-colors.forEach(c => {
-    const div = document.createElement('div');
-    div.style.backgroundColor = c;
-    div.onclick = () => { currentColor = c; updatePalette(); };
-    paletteContainer.appendChild(div);
-});
-function updatePalette() {
-    document.querySelectorAll('#color-palette div').forEach(d =>
-        d.classList.toggle('selected', d.style.backgroundColor === currentColor)
-    );
-}
-updatePalette();
+      // ── Color palette ─────────────────────────────────────────────────────────────
+      const colors = [
+        "cyan",
+        "red",
+        "yellow",
+        "green",
+        "blue",
+        "magenta",
+        "orange",
+        "white",
+        "pink",
+        "lime",
+        "purple",
+        "teal",
+        "brown",
+        "gray",
+        "gold",
+        "silver",
+      ];
+      const paletteContainer = document.getElementById("color-palette");
+      colors.forEach((c) => {
+        const div = document.createElement("div");
+        div.style.backgroundColor = c;
+        div.onclick = () => {
+          currentColor = c;
+          updatePalette();
+        };
+        paletteContainer.appendChild(div);
+      });
+      function updatePalette() {
+        document
+          .querySelectorAll("#color-palette div")
+          .forEach((d) =>
+            d.classList.toggle(
+              "selected",
+              d.style.backgroundColor === currentColor,
+            ),
+          );
+      }
+      updatePalette();
 
+      function draw() {
+        ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+        ctx.clearRect(
+          -offsetX / scale,
+          -offsetY / scale,
+          canvas.width / scale,
+          canvas.height / scale,
+        );
 
-
-function draw() {
-    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
-    ctx.clearRect(-offsetX / scale, -offsetY / scale, canvas.width / scale, canvas.height / scale);
-
-    // ── All polylines ──
-    polys.forEach(p => {
-        if (p.length < 2) return;
-        for (let i = 1; i < p.length; i++) {
+        // ── All polylines ──
+        polys.forEach((p) => {
+          if (p.length < 2) return;
+          for (let i = 1; i < p.length; i++) {
             ctx.beginPath();
             ctx.moveTo(p[i - 1].x, p[i - 1].y);
-            ctx.lineTo(p[i].x,     p[i].y);
+            ctx.lineTo(p[i].x, p[i].y);
             ctx.strokeStyle = p[i - 1].color;
-            ctx.lineWidth   = 2;
+            ctx.lineWidth = 2;
             ctx.stroke();
+          }
+          p.forEach((pt, idx) => {
+            const polyIndex = polys.indexOf(p);
+
+            const isSelectedShape =
+              (currentMode === "MOVE_SHAPE" ||
+                currentMode === "MOVE_SHAPE_DRAG") &&
+              polyIndex === selectedPoly;
+
+            const isMovingPoint =
+              draggingPoint &&
+              draggingPoint.poly === polyIndex &&
+              draggingPoint.point === idx;
+
+            ctx.beginPath();
+            ctx.arc(
+              pt.x,
+              pt.y,
+              isSelectedShape || isMovingPoint ? 6 : 4,
+              0,
+              Math.PI * 2,
+            );
+
+            // Base fill
+            ctx.fillStyle = pt.color;
+            ctx.fill();
+
+            // ✨ Glow for moving point
+            if (isMovingPoint) {
+              ctx.shadowColor = "#00ffff";
+              ctx.shadowBlur = 15;
+
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+              ctx.fillStyle = pt.color;
+              ctx.fill();
+
+              ctx.strokeStyle = "#ffffff";
+              ctx.lineWidth = 2;
+              ctx.stroke();
+
+              ctx.shadowBlur = 0;
+            }
+
+            // ✨ Glow effect for selected shape
+            if (isSelectedShape) {
+              ctx.shadowColor = pt.color;
+              ctx.shadowBlur = 12;
+
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+              ctx.fillStyle = pt.color;
+              ctx.fill();
+
+              // White outline for clarity
+              ctx.strokeStyle = "#ffffff";
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+
+              // Reset shadow (VERY IMPORTANT)
+              ctx.shadowBlur = 0;
+            }
+          });
+        });
+
+        // ── INSERT mode: hovered segment highlight + ghost point ──
+        if (hoveredSeg) {
+          const poly = polys[hoveredSeg.polyIdx];
+          const a = poly[hoveredSeg.segIdx];
+          const b = poly[hoveredSeg.segIdx + 1];
+
+          // Highlight the segment being targeted
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = "rgba(34,197,94,0.7)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          // Dashed drop line from cursor to projected point
+          ctx.beginPath();
+          ctx.moveTo(hoveredSeg.px, hoveredSeg.py);
+          ctx.lineTo(mousePos.x, mousePos.y);
+          ctx.strokeStyle = "rgba(234,179,8,0.6)";
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Ghost point at projected position
+          ctx.beginPath();
+          ctx.arc(hoveredSeg.px, hoveredSeg.py, 6, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(34,197,94,0.9)";
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 1.5;
+          ctx.fill();
+          ctx.stroke();
         }
-      p.forEach((pt, idx) => {
-    const isSelectedShape =
-        (currentMode === 'MOVE_SHAPE' || currentMode === 'MOVE_SHAPE_DRAG') &&
-        polys.indexOf(p) === selectedPoly;
 
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, isSelectedShape ? 6 : 4, 0, Math.PI * 2);
-
-    // Base fill
-    ctx.fillStyle = pt.color;
-    ctx.fill();
-
-    // ✨ Glow effect for selected shape
-    if (isSelectedShape) {
-        ctx.shadowColor = pt.color;
-        ctx.shadowBlur = 12;
-
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = pt.color;
-        ctx.fill();
-
-        // White outline for clarity
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Reset shadow (VERY IMPORTANT)
-        ctx.shadowBlur = 0;
-    }
-});
-    });
-
-    // ── INSERT mode: hovered segment highlight + ghost point ──
-    if (hoveredSeg) {
-        const poly = polys[hoveredSeg.polyIdx];
-        const a    = poly[hoveredSeg.segIdx];
-        const b    = poly[hoveredSeg.segIdx + 1];
-
-        // Highlight the segment being targeted
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = 'rgba(34,197,94,0.7)';
-        ctx.lineWidth   = 3;
-        ctx.stroke();
-
-        // Dashed drop line from cursor to projected point
-        ctx.beginPath();
-        ctx.moveTo(hoveredSeg.px, hoveredSeg.py);
-        ctx.lineTo(mousePos.x, mousePos.y);
-        ctx.strokeStyle = 'rgba(234,179,8,0.6)';
-        ctx.lineWidth   = 1;
-        ctx.setLineDash([4, 3]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Ghost point at projected position
-        ctx.beginPath();
-        ctx.arc(hoveredSeg.px, hoveredSeg.py, 6, 0, Math.PI * 2);
-        ctx.fillStyle   = 'rgba(34,197,94,0.9)';
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth   = 1.5;
-        ctx.fill();
-        ctx.stroke();
-    }
-
-    // ── BEGIN mode: rubber-band line to cursor ──
-    if (isDrawing && polys.length > 0) {
-        const last = polys[polys.length - 1];
-        if (last.length > 0) {
+        // ── BEGIN mode: rubber-band line to cursor ──
+        if (isDrawing && polys.length > 0) {
+          const last = polys[polys.length - 1];
+          if (last.length > 0) {
             const tip = last[last.length - 1];
             ctx.beginPath();
             ctx.moveTo(tip.x, tip.y);
             ctx.lineTo(mousePos.x, mousePos.y);
-            ctx.strokeStyle = 'rgba(34,197,94,0.4)';
-            ctx.lineWidth   = 2;
+            ctx.strokeStyle = "rgba(34,197,94,0.4)";
+            ctx.lineWidth = 2;
             ctx.setLineDash([6, 4]);
             ctx.stroke();
             ctx.setLineDash([]);
+          }
         }
-    }
-}
+      }
 
-// ── Resize ────────────────────────────────────────────────────────────────────
-function resizeCanvas() {
+      // ── Resize ────────────────────────────────────────────────────────────────────
+    function resizeCanvas() {
     canvas.width  = wrapper.clientWidth;
     canvas.height = wrapper.clientHeight;
     draw();
 }
 
-window.onresize = resizeCanvas;
-setTimeout(resizeCanvas, 0);
+      window.onresize = resizeCanvas;
+      setTimeout(resizeCanvas, 0);
 
-window.onload = () => {
-    changeMode('IDLE');
-};
+      window.onload = () => {
+        changeMode("IDLE");
+      };
 
-function changeMode(m) {
-    currentMode = m;
+      function changeMode(m) {
+        currentMode = m;
 
-    selectedPoly = -1;
-    draggingPoint = null;
-    hoveredSeg = null;
+        selectedPoly = -1;
+        draggingPoint = null;
+        hoveredSeg = null;
 
-    if (m !== 'BEGIN') {
-        isDrawing = false;
-    }
+        if (m !== "BEGIN") {
+          isDrawing = false;
+        }
 
-    document.querySelectorAll('.btn-tool').forEach(btn => {
-        btn.classList.remove('active');
-    });
-
-    const map = {
-        'BEGIN': 'tool-b',
-        'INSERT': 'tool-i',
-        'DELETE': 'tool-d',
-        'MOVE_POINT': 'tool-m',
-        'MOVE_SHAPE': 'tool-move-shape'
-    };
-
-    if (map[m]) {
-        document.getElementById(map[m]).classList.add('active');
-    }
-
-    if (m === 'IDLE') {
-        document.querySelectorAll('.btn-tool').forEach(btn => {
-            btn.classList.remove('active');
+        document.querySelectorAll(".btn-tool").forEach((btn) => {
+          btn.classList.remove("active");
         });
-    }
 
-    document.getElementById('mode-text').innerText = m;
-    document.getElementById('current-tool').innerText = m;
+        const map = {
+          BEGIN: "tool-b",
+          INSERT: "tool-i",
+          DELETE: "tool-d",
+          MOVE_POINT: "tool-m",
+          MOVE_SHAPE: "tool-move-shape",
+        };
 
-    updateUI();
-    draw();
-    updateToolAvailability();
-}
+        if (map[m]) {
+          document.getElementById(map[m]).classList.add("active");
+        }
 
-// ── Toolbar wiring ────────────────────────────────────────────────────────────
-document.getElementById('tool-b').onclick          = () => changeMode('BEGIN');
-document.getElementById('tool-i').onclick          = () => changeMode('INSERT');
-document.getElementById('tool-d').onclick          = () => changeMode('DELETE');
-document.getElementById('tool-m').onclick          = () => changeMode('MOVE_POINT');
-document.getElementById('tool-move-shape').onclick = () => changeMode('MOVE_SHAPE');
-document.getElementById('tool-r').onclick          = () => { saveState(); polys = []; updateUI(); changeMode('IDLE'); };
-document.getElementById('tool-undo').onclick       = undo;
-document.getElementById('tool-redo').onclick       = redo;
-document.getElementById('tool-save').onclick       = saveToFile;
-document.getElementById('tool-load').onclick       = () => document.getElementById('file-input').click();
-document.getElementById('file-input').onchange     = e => loadFromFile(e.target.files[0]);
+        if (m === "IDLE") {
+          document.querySelectorAll(".btn-tool").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+        }
 
+        document.getElementById("mode-text").innerText = m;
+        document.getElementById("current-tool").innerText = m;
 
+        updateUI();
+        draw();
+        updateToolAvailability();
+      }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
-function updateUI() {
-    document.getElementById('sys-status').innerText =
-        currentMode === 'IDLE' ? 'Ready' : 'Working…';
-    document.getElementById('poly-count').innerText =
-        polys.filter(p => p.length > 1).length;
-    const dot = document.getElementById('mode-dot');
-    dot.className = 'w-2 h-2 rounded-full ' +
-        (currentMode === 'IDLE' ? 'bg-slate-400' : 'bg-green-500');
-}
+      // ── Toolbar wiring ────────────────────────────────────────────────────────────
+      document.getElementById("tool-b").onclick = () => changeMode("BEGIN");
+      document.getElementById("tool-i").onclick = () => changeMode("INSERT");
+      document.getElementById("tool-d").onclick = () => changeMode("DELETE");
+      document.getElementById("tool-m").onclick = () =>
+        changeMode("MOVE_POINT");
+      document.getElementById("tool-move-shape").onclick = () =>
+        changeMode("MOVE_SHAPE");
+      document.getElementById("tool-r").onclick = () => {
+        saveState();
+        polys = [];
+        updateUI();
+        changeMode("IDLE");
+      };
+      document.getElementById("tool-undo").onclick = undo;
+      document.getElementById("tool-redo").onclick = redo;
+      document.getElementById("tool-save").onclick = saveToFile;
+      document.getElementById("tool-load").onclick = () =>
+        document.getElementById("file-input").click();
+      document.getElementById("file-input").onchange = (e) =>
+        loadFromFile(e.target.files[0]);
 
-// ── Coordinate helpers ────────────────────────────────────────────────────────
-function getMouse(e) {
-    const r = canvas.getBoundingClientRect();
-    return {
-        x: (e.clientX - r.left  - offsetX) / scale,
-        y: (e.clientY - r.top   - offsetY) / scale
-    };
-}
+      // ── UI helpers ────────────────────────────────────────────────────────────────
+      function updateUI() {
+        document.getElementById("sys-status").innerText =
+          currentMode === "IDLE" ? "Ready" : "Working…";
+        document.getElementById("poly-count").innerText = polys.filter(
+          (p) => p.length > 1,
+        ).length;
+        const dot = document.getElementById("mode-dot");
+        dot.className =
+          "w-2 h-2 rounded-full " +
+          (currentMode === "IDLE" ? "bg-slate-400" : "bg-green-500");
+      }
 
-function findClosestPoint(x, y) {
-    let result = null, minDist = SNAP_DIST;
-    polys.forEach((poly, i) => poly.forEach((pt, j) => {
-        const d = Math.hypot(pt.x - x, pt.y - y);
-        if (d < minDist) { minDist = d; result = { poly: i, point: j }; }
-    }));
-    return result;
-}
+      // ── Coordinate helpers ────────────────────────────────────────────────────────
+      function getMouse(e) {
+        const r = canvas.getBoundingClientRect();
+        return {
+          x: (e.clientX - r.left - offsetX) / scale,
+          y: (e.clientY - r.top - offsetY) / scale,
+        };
+      }
 
-function findClosestPolyByPoint(x, y) {
-    let result = null, minDist = SNAP_DIST;
-    polys.forEach((poly, i) => poly.forEach(pt => {
-        const d = Math.hypot(pt.x - x, pt.y - y);
-        if (d < minDist) { minDist = d; result = i; }
-    }));
-    return result;
-}
+      function findClosestPoint(x, y) {
+        let result = null,
+          minDist = SNAP_DIST;
+        polys.forEach((poly, i) =>
+          poly.forEach((pt, j) => {
+            const d = Math.hypot(pt.x - x, pt.y - y);
+            if (d < minDist) {
+              minDist = d;
+              result = { poly: i, point: j };
+            }
+          }),
+        );
+        return result;
+      }
 
-// ── Segment projection math ───────────────────────────────────────────────────
-// Returns the perpendicular distance from (mx,my) to segment AB,
-// plus the projected point (px,py) clamped to the segment.
-function pointToSegment(mx, my, ax, ay, bx, by) {
-    const dx = bx - ax, dy = by - ay;
-    const lenSq = dx * dx + dy * dy;
-    if (lenSq === 0) return { dist: Math.hypot(mx - ax, my - ay), px: ax, py: ay };
-    let t = ((mx - ax) * dx + (my - ay) * dy) / lenSq;
-    t = Math.max(0, Math.min(1, t));    // clamp to [0,1] — stay on segment
-    const px = ax + t * dx, py = ay + t * dy;
-    return { dist: Math.hypot(mx - px, my - py), px, py };
-}
+      function findClosestPolyByPoint(x, y) {
+        let result = null,
+          minDist = SNAP_DIST;
+        polys.forEach((poly, i) =>
+          poly.forEach((pt) => {
+            const d = Math.hypot(pt.x - x, pt.y - y);
+            if (d < minDist) {
+              minDist = d;
+              result = i;
+            }
+          }),
+        );
+        return result;
+      }
 
-// Finds the nearest segment across all polylines within SEG_SNAP pixels.
-function findClosestSegment(mx, my) {
-    let best = null, minDist = SEG_SNAP;
-    polys.forEach((poly, pi) => {
-        for (let i = 0; i < poly.length - 1; i++) {
+      // ── Segment projection math ───────────────────────────────────────────────────
+      // Returns the perpendicular distance from (mx,my) to segment AB,
+      // plus the projected point (px,py) clamped to the segment.
+      function pointToSegment(mx, my, ax, ay, bx, by) {
+        const dx = bx - ax,
+          dy = by - ay;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq === 0)
+          return { dist: Math.hypot(mx - ax, my - ay), px: ax, py: ay };
+        let t = ((mx - ax) * dx + (my - ay) * dy) / lenSq;
+        t = Math.max(0, Math.min(1, t)); // clamp to [0,1] — stay on segment
+        const px = ax + t * dx,
+          py = ay + t * dy;
+        return { dist: Math.hypot(mx - px, my - py), px, py };
+      }
+
+      // Finds the nearest segment across all polylines within SEG_SNAP pixels.
+      function findClosestSegment(mx, my) {
+        let best = null,
+          minDist = SEG_SNAP;
+        polys.forEach((poly, pi) => {
+          for (let i = 0; i < poly.length - 1; i++) {
             const { dist, px, py } = pointToSegment(
-                mx, my,
-                poly[i].x, poly[i].y,
-                poly[i + 1].x, poly[i + 1].y
+              mx,
+              my,
+              poly[i].x,
+              poly[i].y,
+              poly[i + 1].x,
+              poly[i + 1].y,
             );
             if (dist < minDist) {
-                minDist = dist;
-                best = { polyIdx: pi, segIdx: i, px, py };
+              minDist = dist;
+              best = { polyIdx: pi, segIdx: i, px, py };
             }
+          }
+        });
+        return best;
+      }
+
+      // ── Mouse events ──────────────────────────────────────────────────────────────
+      canvas.addEventListener("mousedown", (e) => {
+        if (e.button === 2) {
+          // Right-click → pan
+          isPanning = true;
+          panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY };
+          return;
         }
-    });
-    return best;
-}
+        if (e.button !== 0) return;
 
-// ── Mouse events ──────────────────────────────────────────────────────────────
-canvas.addEventListener('mousedown', e => {
-    if (e.button === 2) {
-        // Right-click → pan
-        isPanning = true;
-        panStart  = { x: e.clientX - offsetX, y: e.clientY - offsetY };
-        return;
-    }
-    if (e.button !== 0) return;
+        mousePos = getMouse(e);
 
-    mousePos = getMouse(e);
-
-    if (currentMode === 'BEGIN') {
-        saveState();
-        if (!isDrawing) {
+        if (currentMode === "BEGIN") {
+          saveState();
+          if (!isDrawing) {
             polys.push([{ x: mousePos.x, y: mousePos.y, color: currentColor }]);
             isDrawing = true;
-        } else {
-            polys[polys.length - 1].push({ x: mousePos.x, y: mousePos.y, color: currentColor });
-        }
-
-    } else if (currentMode === 'INSERT') {
-        // Project onto the nearest segment and splice the new point in
-        const seg = findClosestSegment(mousePos.x, mousePos.y);
-        if (seg) {
+          } else {
+            polys[polys.length - 1].push({
+              x: mousePos.x,
+              y: mousePos.y,
+              color: currentColor,
+            });
+          }
+        } else if (currentMode === "INSERT") {
+          // Project onto the nearest segment and splice the new point in
+          const seg = findClosestSegment(mousePos.x, mousePos.y);
+          if (seg) {
             saveState();
             const color = polys[seg.polyIdx][seg.segIdx].color;
             polys[seg.polyIdx].splice(seg.segIdx + 1, 0, {
-                x: seg.px, y: seg.py, color
+              x: seg.px,
+              y: seg.py,
+              color,
             });
-            hoveredSeg = null;  // reset so it re-computes on next mousemove
-        }
-
-    } else if (currentMode === 'DELETE') {
-        const h = findClosestPoint(mousePos.x, mousePos.y);
-        if (h) {
+            hoveredSeg = null; // reset so it re-computes on next mousemove
+          }
+        } else if (currentMode === "DELETE") {
+          const h = findClosestPoint(mousePos.x, mousePos.y);
+          if (h) {
             saveState();
             polys[h.poly].splice(h.point, 1);
-            polys = polys.filter(p => p.length > 1);
-        }
-
-    } else if (currentMode === 'MOVE_POINT') {
-        const h = findClosestPoint(mousePos.x, mousePos.y);
-        if (h) draggingPoint = h;
-
-    } else if (currentMode === 'MOVE_SHAPE') {
-        selectedPoly = findClosestPolyByPoint(mousePos.x, mousePos.y);
-        if (selectedPoly >= 0) {
+            polys = polys.filter((p) => p.length > 1);
+          }
+        } else if (currentMode === "MOVE_POINT") {
+          const h = findClosestPoint(mousePos.x, mousePos.y);
+          if (h) draggingPoint = h;
+        } else if (currentMode === "MOVE_SHAPE") {
+          selectedPoly = findClosestPolyByPoint(mousePos.x, mousePos.y);
+          if (selectedPoly >= 0) {
             moveShapeStart = { x: mousePos.x, y: mousePos.y };
-            currentMode = 'MOVE_SHAPE_DRAG';
+            currentMode = "MOVE_SHAPE_DRAG";
+          }
         }
-    }
 
-    updateUI();
-    draw();
-});
-
-canvas.addEventListener('mousemove', e => {
-    mousePos = getMouse(e);
-    document.getElementById('coords').innerText =
-        `(${Math.round(mousePos.x)}, ${Math.round(mousePos.y)})`;
-
-    if (isPanning) {
-        offsetX = e.clientX - panStart.x;
-        offsetY = e.clientY - panStart.y;
+        updateUI();
         draw();
-        return;
-    }
+      });
 
-    // Rubber-band vertex drag
-    if (draggingPoint) {
-        const { poly, point } = draggingPoint;
-        polys[poly][point].x = mousePos.x;
-        polys[poly][point].y = mousePos.y;
-    }
+      canvas.addEventListener("mousemove", (e) => {
+        mousePos = getMouse(e);
+        document.getElementById("coords").innerText =
+          `(${Math.round(mousePos.x)}, ${Math.round(mousePos.y)})`;
 
-    // Move shape
-    if (currentMode === 'MOVE_SHAPE_DRAG' && selectedPoly >= 0) {
-        const dx = mousePos.x - moveShapeStart.x;
-        const dy = mousePos.y - moveShapeStart.y;
-        polys[selectedPoly].forEach(pt => { pt.x += dx; pt.y += dy; });
-        moveShapeStart = { x: mousePos.x, y: mousePos.y };
-    }
-    
-
-    // Live segment highlight in INSERT mode
-    hoveredSeg = (currentMode === 'INSERT') ? findClosestSegment(mousePos.x, mousePos.y) : null;
-
-    draw();
-    updateToolAvailability();
-});
-
-canvas.addEventListener('mouseup', () => {
-    isPanning     = false;
-    draggingPoint = null;
-    if (currentMode === 'MOVE_SHAPE_DRAG') currentMode = 'MOVE_SHAPE';
-});
-
-canvas.addEventListener('contextmenu', e => e.preventDefault());
-
-canvas.addEventListener('wheel', e => {
-    const mx = (e.clientX - offsetX) / scale;
-    const my = (e.clientY - offsetY) / scale;
-    scale *= e.deltaY < 0 ? 1.1 : 0.9;
-    scale  = Math.min(Math.max(scale, 0.2), 5);
-    offsetX = e.clientX - mx * scale;
-    offsetY = e.clientY - my * scale;
-    draw();
-});
-
-// ── Keyboard ──────────────────────────────────────────────────────────────────
-window.addEventListener('keydown', e => {
-     const k = e.key.toLowerCase();
-
-    const isEmpty = !hasContent();
-
-    //  Block keys when empty
-    if (isEmpty) {
-        if (k !== 'b' && !(k === 'y' && redoStack.length > 0)) {
-            return; //  ignore everything except BEGIN + REDO
+        if (isPanning) {
+          offsetX = e.clientX - panStart.x;
+          offsetY = e.clientY - panStart.y;
+          draw();
+          return;
         }
-    }
 
-    if (e.ctrlKey) {
-        if (k === 'z') { e.preventDefault(); undo();   return; }
-        if (k === 'y') { e.preventDefault(); redo();   return; }
-        if (k === 's') { e.preventDefault(); saveToFile(); return; }
-        if (k === 'o') { e.preventDefault(); document.getElementById('file-input').click(); return; }
-        return;
-    }
-    if (k === 'b')      changeMode('BEGIN');
-    if (k === 'i')      changeMode('INSERT');
-    if (k === 'd')      changeMode('DELETE');
-    if (k === 'm')      changeMode('MOVE_POINT');
-    if (k === 's')      changeMode('MOVE_SHAPE');
-    if (k === 'r')      { saveState(); polys = []; updateUI(); changeMode('IDLE'); }
-if (k === 'enter') {
-    isDrawing = false;
-    changeMode('IDLE'); // ✅ FIXED
-}
-    if (k === 'escape') changeMode('IDLE');
-     if (e.key.toLowerCase() === 'q') {
-        window.close(); // ✅ works here
-    }
-});
+        // Rubber-band vertex drag
+        if (draggingPoint) {
+          const { poly, point } = draggingPoint;
+          polys[poly][point].x = mousePos.x;
+          polys[poly][point].y = mousePos.y;
+        }
 
-// ── Draw ──────────────────────────────────────────────────────────────────────
-function updateToolAvailability() {
-    const isEmpty = !hasContent();
+        // Move shape
+        if (currentMode === "MOVE_SHAPE_DRAG" && selectedPoly >= 0) {
+          const dx = mousePos.x - moveShapeStart.x;
+          const dy = mousePos.y - moveShapeStart.y;
+          polys[selectedPoly].forEach((pt) => {
+            pt.x += dx;
+            pt.y += dy;
+          });
+          moveShapeStart = { x: mousePos.x, y: mousePos.y };
+        }
 
-    const disable = (id, state) => {
-        const btn = document.getElementById(id);
-        btn.disabled = state;
-        btn.style.opacity = state ? "0.4" : "1";
-        btn.style.pointerEvents = state ? "none" : "auto";
-    };
+        // Live segment highlight in INSERT mode
+        hoveredSeg =
+          currentMode === "INSERT"
+            ? findClosestSegment(mousePos.x, mousePos.y)
+            : null;
 
-    // BEGIN always enabled
-    disable('tool-b', false);
+        draw();
+        updateToolAvailability();
+      });
 
-    // 🔥 Undo/Redo based on STACKS (IMPORTANT FIX)
-    disable('tool-undo', undoStack.length === 0);
-    disable('tool-redo', redoStack.length === 0);
+      canvas.addEventListener("mouseup", () => {
+        isPanning = false;
+        draggingPoint = null;
+        if (currentMode === "MOVE_SHAPE_DRAG") currentMode = "MOVE_SHAPE";
+      });
 
-    if (isEmpty) {
-        // Empty canvas → disable editing tools
-        disable('tool-i', true);
-        disable('tool-d', true);
-        disable('tool-m', true);
-        disable('tool-r', true);
-        disable('tool-move-shape', true);
-        disable('tool-save', true);
-        // disable('tool-load', true);
+      canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
-    } else {
-        // Content exists → enable everything
-        disable('tool-i', false);
-        disable('tool-d', false);
-        disable('tool-m', false);
-                disable('tool-r', false);
+      canvas.addEventListener("wheel", (e) => {
+        const mx = (e.clientX - offsetX) / scale;
+        const my = (e.clientY - offsetY) / scale;
+        scale *= e.deltaY < 0 ? 1.1 : 0.9;
+        scale = Math.min(Math.max(scale, 0.2), 5);
+        offsetX = e.clientX - mx * scale;
+        offsetY = e.clientY - my * scale;
+        draw();
+      });
 
-        disable('tool-move-shape', false);
-        disable('tool-save', false);
-        disable('tool-load', false);
-    }
-}
-function hasContent() {
-    return polys.some(p => p.length > 1);
-}
-// ── Undo / redo ───────────────────────────────────────────────────────────────
-function saveState() {
-    undoStack.push(JSON.stringify(polys));
-    redoStack = [];
-}
-function undo() {
-    if (!undoStack.length) return;
-    redoStack.push(JSON.stringify(polys));
-    polys = JSON.parse(undoStack.pop());
+      // ── Keyboard ──────────────────────────────────────────────────────────────────
+      window.addEventListener("keydown", (e) => {
+        const k = e.key.toLowerCase();
 
-    // ✅ FIX: reset interaction states
-    isDrawing = false;
-    draggingPoint = null;
-    selectedPoly = -1;
-    hoveredSeg = null;
+        const isEmpty = !hasContent();
 
-    updateUI();
-    draw();
-    updateToolAvailability();
-}
+        //  Block keys when empty
+        if (isEmpty) {
+          if (k !== "b" && !(k === "y" && redoStack.length > 0)) {
+            return; //  ignore everything except BEGIN + REDO
+          }
+        }
 
-function redo() {
-    if (!redoStack.length) return;
-    undoStack.push(JSON.stringify(polys));
-    polys = JSON.parse(redoStack.pop());
+        if (e.ctrlKey) {
+          if (k === "z") {
+            e.preventDefault();
+            undo();
+            return;
+          }
+          if (k === "y") {
+            e.preventDefault();
+            redo();
+            return;
+          }
+          if (k === "s") {
+            e.preventDefault();
+            saveToFile();
+            return;
+          }
+          if (k === "o") {
+            e.preventDefault();
+            document.getElementById("file-input").click();
+            return;
+          }
+          return;
+        }
+        if (k === "b") changeMode("BEGIN");
+        if (k === "i") changeMode("INSERT");
+        if (k === "d") changeMode("DELETE");
+        if (k === "m") changeMode("MOVE_POINT");
+        if (k === "s") changeMode("MOVE_SHAPE");
+        if (k === "r") {
+          saveState();
+          polys = [];
+          updateUI();
+          changeMode("IDLE");
+        }
+        if (k === "enter") {
+          isDrawing = false;
+          changeMode("IDLE"); // ✅ FIXED
+        }
+        if (k === "escape") changeMode("IDLE");
+        if (e.key.toLowerCase() === "q") {
+          window.close(); // ✅ works here
+        }
+      });
 
-    // ✅ FIX: reset interaction states
-    isDrawing = false;
-    draggingPoint = null;
-    selectedPoly = -1;
-    hoveredSeg = null;
+      // ── Draw ──────────────────────────────────────────────────────────────────────
+      function updateToolAvailability() {
+        const isEmpty = !hasContent();
 
-    updateUI();
-    draw();
-    updateToolAvailability();
-}
+        const disable = (id, state) => {
+          const btn = document.getElementById(id);
+          btn.disabled = state;
+          btn.style.opacity = state ? "0.4" : "1";
+          btn.style.pointerEvents = state ? "none" : "auto";
+        };
 
-// ── Save to .json file ────────────────────────────────────────────────────────
-function saveToFile() {
-    const payload = {
-        version: 1,
-        created: new Date().toISOString(),
-        polys
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = 'polylines.json';
-    a.click();
-    // Free the object URL after a tick so the download fires
-    setTimeout(() => URL.revokeObjectURL(a.href), 100);
-    flashStatus('Saved ✓');
-}
+        // BEGIN always enabled
+        disable("tool-b", false);
 
-// ── Load from .json file ──────────────────────────────────────────────────────
-function loadFromFile(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-        try {
+        // 🔥 Undo/Redo based on STACKS (IMPORTANT FIX)
+        disable("tool-undo", undoStack.length === 0);
+        disable("tool-redo", redoStack.length === 0);
+
+        if (isEmpty) {
+          // Empty canvas → disable editing tools
+          disable("tool-i", true);
+          disable("tool-d", true);
+          disable("tool-m", true);
+          disable("tool-r", true);
+          disable("tool-move-shape", true);
+          disable("tool-save", true);
+          // disable('tool-load', true);
+        } else {
+          // Content exists → enable everything
+          disable("tool-i", false);
+          disable("tool-d", false);
+          disable("tool-m", false);
+          disable("tool-r", false);
+
+          disable("tool-move-shape", false);
+          disable("tool-save", false);
+          disable("tool-load", false);
+        }
+      }
+      function hasContent() {
+        return polys.some((p) => p.length > 1);
+      }
+      // ── Undo / redo ───────────────────────────────────────────────────────────────
+      function saveState() {
+        undoStack.push(JSON.stringify(polys));
+        redoStack = [];
+      }
+      function undo() {
+        if (!undoStack.length) return;
+        redoStack.push(JSON.stringify(polys));
+        polys = JSON.parse(undoStack.pop());
+
+        // ✅ FIX: reset interaction states
+        isDrawing = false;
+        draggingPoint = null;
+        selectedPoly = -1;
+        hoveredSeg = null;
+
+        updateUI();
+        draw();
+        updateToolAvailability();
+      }
+
+      function redo() {
+        if (!redoStack.length) return;
+        undoStack.push(JSON.stringify(polys));
+        polys = JSON.parse(redoStack.pop());
+
+        // ✅ FIX: reset interaction states
+        isDrawing = false;
+        draggingPoint = null;
+        selectedPoly = -1;
+        hoveredSeg = null;
+
+        updateUI();
+        draw();
+        updateToolAvailability();
+      }
+
+      // ── Save to .json file ────────────────────────────────────────────────────────
+      function saveToFile() {
+        const payload = {
+          version: 1,
+          created: new Date().toISOString(),
+          polys,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "polylines.json";
+        a.click();
+        // Free the object URL after a tick so the download fires
+        setTimeout(() => URL.revokeObjectURL(a.href), 100);
+        flashStatus("Saved ✓");
+      }
+
+      // ── Load from .json file ──────────────────────────────────────────────────────
+      function loadFromFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
             const data = JSON.parse(ev.target.result);
-            saveState();    // make the load undoable via Ctrl+Z
+            saveState(); // make the load undoable via Ctrl+Z
             // Accept both bare array (legacy) and versioned object
             polys = Array.isArray(data) ? data : (data.polys ?? []);
             updateUI();
             draw();
-            flashStatus('Loaded ✓');
-        } catch {
-            alert('Could not parse file — make sure it is a valid polylines.json.');
-        }
-    };
-    reader.readAsText(file);
-    // Reset so the same file can be re-loaded without picking a new one
-    document.getElementById('file-input').value = '';
-    updateToolAvailability();
-}
+            flashStatus("Loaded ✓");
+          } catch {
+            alert(
+              "Could not parse file — make sure it is a valid polylines.json.",
+            );
+          }
+        };
+        reader.readAsText(file);
+        // Reset so the same file can be re-loaded without picking a new one
+        document.getElementById("file-input").value = "";
+        updateToolAvailability();
+      }
 
-// Brief status flash
-function flashStatus(msg) {
-    const el = document.getElementById('sys-status');
-    el.innerText = msg;
-    setTimeout(() => updateUI(), 1800);
-}
+      // Brief status flash
+      function flashStatus(msg) {
+        const el = document.getElementById("sys-status");
+        el.innerText = msg;
+        setTimeout(() => updateUI(), 1800);
+      }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-resizeCanvas();
+      // ── Init ──────────────────────────────────────────────────────────────────────
+      resizeCanvas();
 
+      changeMode("IDLE");
 
-changeMode('IDLE');
-
-updateUI();
-draw();
-</script>
-</body>
+      updateUI();
+      draw();
+    </script>
+  </body>
 </html>
