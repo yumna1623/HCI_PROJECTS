@@ -54,6 +54,10 @@ body {
     backdrop-filter: blur(8px);
     color: white;
 }
+button:disabled {
+    cursor: not-allowed;
+    filter: grayscale(80%);
+}
 </style>
 </head>
 <body class="flex flex-col h-screen">
@@ -325,6 +329,7 @@ function changeMode(m) {
 
     updateUI();
     draw();
+    updateToolAvailability();
 }
 
 // ── Toolbar wiring ────────────────────────────────────────────────────────────
@@ -501,6 +506,7 @@ canvas.addEventListener('mousemove', e => {
     hoveredSeg = (currentMode === 'INSERT') ? findClosestSegment(mousePos.x, mousePos.y) : null;
 
     draw();
+    updateToolAvailability();
 });
 
 canvas.addEventListener('mouseup', () => {
@@ -523,7 +529,17 @@ canvas.addEventListener('wheel', e => {
 
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 window.addEventListener('keydown', e => {
-    const k = e.key.toLowerCase();
+     const k = e.key.toLowerCase();
+
+    const isEmpty = !hasContent();
+
+    //  Block keys when empty
+    if (isEmpty) {
+        if (k !== 'b' && !(k === 'y' && redoStack.length > 0)) {
+            return; //  ignore everything except BEGIN + REDO
+        }
+    }
+
     if (e.ctrlKey) {
         if (k === 'z') { e.preventDefault(); undo();   return; }
         if (k === 'y') { e.preventDefault(); redo();   return; }
@@ -548,8 +564,48 @@ if (k === 'enter') {
 });
 
 // ── Draw ──────────────────────────────────────────────────────────────────────
+function updateToolAvailability() {
+    const isEmpty = !hasContent();
 
+    const disable = (id, state) => {
+        const btn = document.getElementById(id);
+        btn.disabled = state;
+        btn.style.opacity = state ? "0.4" : "1";
+        btn.style.pointerEvents = state ? "none" : "auto";
+    };
 
+    // BEGIN always enabled
+    disable('tool-b', false);
+
+    // 🔥 Undo/Redo based on STACKS (IMPORTANT FIX)
+    disable('tool-undo', undoStack.length === 0);
+    disable('tool-redo', redoStack.length === 0);
+
+    if (isEmpty) {
+        // Empty canvas → disable editing tools
+        disable('tool-i', true);
+        disable('tool-d', true);
+        disable('tool-m', true);
+        disable('tool-r', true);
+        disable('tool-move-shape', true);
+        disable('tool-save', true);
+        disable('tool-load', true);
+
+    } else {
+        // Content exists → enable everything
+        disable('tool-i', false);
+        disable('tool-d', false);
+        disable('tool-m', false);
+                disable('tool-r', false);
+
+        disable('tool-move-shape', false);
+        disable('tool-save', false);
+        disable('tool-load', false);
+    }
+}
+function hasContent() {
+    return polys.some(p => p.length > 1);
+}
 // ── Undo / redo ───────────────────────────────────────────────────────────────
 function saveState() {
     undoStack.push(JSON.stringify(polys));
@@ -568,6 +624,7 @@ function undo() {
 
     updateUI();
     draw();
+    updateToolAvailability();
 }
 
 function redo() {
@@ -583,6 +640,7 @@ function redo() {
 
     updateUI();
     draw();
+    updateToolAvailability();
 }
 
 // ── Save to .json file ────────────────────────────────────────────────────────
@@ -622,6 +680,7 @@ function loadFromFile(file) {
     reader.readAsText(file);
     // Reset so the same file can be re-loaded without picking a new one
     document.getElementById('file-input').value = '';
+    updateToolAvailability();
 }
 
 // Brief status flash
