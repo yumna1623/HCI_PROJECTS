@@ -48,11 +48,15 @@
       #color-palette div {
         border: 2px solid #475569;
         cursor: pointer;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
+        width: 36px; /* optional: slightly bigger */
+        height: 28px; /* optional: rectangle shape */
+        border-radius: 8px; /* 👈 rounded rectangle */
         display: inline-block;
       }
+      #color-palette div:hover {
+        transform: scale(1.1);
+      }
+
       #color-palette div.selected {
         border-color: #14b8a6;
         box-shadow: 0 0 5px #14b8a6;
@@ -435,11 +439,11 @@
       }
 
       // ── Resize ────────────────────────────────────────────────────────────────────
-    function resizeCanvas() {
-    canvas.width  = wrapper.clientWidth;
-    canvas.height = wrapper.clientHeight;
-    draw();
-}
+      function resizeCanvas() {
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+        draw();
+      }
 
       window.onresize = resizeCanvas;
       setTimeout(resizeCanvas, 0);
